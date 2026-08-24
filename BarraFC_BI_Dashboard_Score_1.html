@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BarraFC · BI Controladoria — Cadastro Central do Atleta</title>
+<!--
+  COMPATÍVEL COM SHAREPOINT
+  • Sem dependências externas — zero CDN, zero imports
+  • Para incorporar: upload no SharePoint → copie o URL → Embed web part → <iframe src="URL">
+-->
+<style>
+:root{
+  --azul-escuro:#083B7A;
+  --azul-principal:#0B4FA2;
+  --azul-claro:#3A78C2;
+  --destaque:#F2C100;
+  --branco:#FFFFFF;
+  --txt-primario:#0A0A0A;
+  --txt-secundario:#5A5A5A;
+  --verde:#2E7D32;
+  --amarelo:#F2C100;
+  --vermelho:#C62828;
+  --card-bg:#F4F8FD;
+  --border:#DCE6F2;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',Aptos,Arial,sans-serif;background:#EEF3F9;color:var(--txt-primario)}
+header{background:linear-gradient(135deg,var(--azul-escuro),var(--azul-principal));color:#fff;padding:22px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+header .brand{display:flex;align-items:center;gap:14px}
+header .brand .logo{width:46px;height:46px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(255,255,255,.3)}
+header h1{margin:0;font-size:1.3rem}
+header p{margin:2px 0 0;font-size:.8rem;color:#CFE0F5}
+header .meta{text-align:right;font-size:.75rem;color:#CFE0F5}
+.main{max-width:1400px;margin:0 auto;padding:22px 24px 60px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:#fff;border-radius:10px;padding:16px 18px;border-left:5px solid var(--azul-principal);box-shadow:0 1px 4px rgba(8,59,122,.08)}
+.kpi .kpi-lbl{font-size:.72rem;color:var(--txt-secundario);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.kpi .kpi-val{font-size:1.7rem;font-weight:700;color:var(--azul-escuro);margin-top:4px}
+.kpi .kpi-sub{font-size:.72rem;color:var(--txt-secundario);margin-top:3px}
+.kpi.alert{border-left-color:var(--vermelho)}
+.kpi.warn{border-left-color:var(--destaque)}
+.kpi.ok{border-left-color:var(--verde)}
+
+.tabs{display:flex;gap:6px;border-bottom:2px solid var(--border);margin-bottom:18px;flex-wrap:wrap}
+.tab-btn{background:none;border:none;padding:10px 16px;font-size:.85rem;font-weight:600;color:var(--txt-secundario);cursor:pointer;border-bottom:3px solid transparent;border-radius:6px 6px 0 0;transition:.15s}
+.tab-btn:hover{background:#E3EDF9;color:var(--azul-escuro)}
+.tab-btn.active{color:var(--azul-principal);border-bottom-color:var(--destaque);background:#fff}
+
+.panel{display:none}
+.panel.active{display:block;animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(8,59,122,.08);margin-bottom:16px}
+.card h3{margin:0 0 4px;font-size:1rem;color:var(--azul-escuro)}
+.card .sub{font-size:.78rem;color:var(--txt-secundario);margin-bottom:12px}
+.card canvas{width:100%;display:block}
+
+select, .chip{font-family:inherit}
+.filters{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.filters select{padding:7px 10px;border-radius:6px;border:1px solid var(--border);font-size:.82rem;color:var(--txt-primario);background:#fff}
+.filters label{font-size:.78rem;color:var(--txt-secundario);font-weight:600}
+
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
+th{background:var(--azul-principal);color:#fff;font-size:.72rem;text-transform:uppercase;letter-spacing:.3px}
+tr:nth-child(even) td{background:#F5F9FD}
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:.72rem;font-weight:700;color:#fff}
+.b-verde{background:var(--verde)}
+.b-vermelho{background:var(--vermelho)}
+.b-amarelo{background:var(--amarelo);color:var(--txt-primario)}
+.b-azul{background:var(--azul-claro)}
+
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;font-size:.75rem;color:var(--txt-secundario);margin-top:10px}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+
+#tooltip{position:fixed;background:var(--azul-escuro);color:#fff;padding:7px 12px;border-radius:7px;font-size:.72rem;pointer-events:none;display:none;box-shadow:0 3px 10px rgba(0,0,0,.3);z-index:9999;line-height:1.6}
+
+footer{text-align:center;padding:20px;font-size:.72rem;color:var(--txt-secundario)}
+.note{font-size:.75rem;color:var(--txt-secundario);font-style:italic;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="tooltip"></div>
+
+<header>
+  <div class="brand">
+    <div class="logo">⚽</div>
+    <div>
+      <h1>BarraFC · BI da Controladoria</h1>
+      <p>Cadastro Central do Atleta — visão consolidada por área</p>
+    </div>
+  </div>
+  <div class="meta">
+    Painéis representam as listas do Microsoft 365<br>
+    Gerado em 24/08/2026 · klit Integradora de T.I.
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="score">📈 Score &amp; Avaliações</button>
+    <button class="tab-btn" data-tab="tatico">Tático Técnico</button>
+    <button class="tab-btn" data-tab="kpis">KPIs de Jogo</button>
+    <button class="tab-btn" data-tab="saude">Físico · Nutrição · Social · Psicologia</button>
+    <button class="tab-btn" data-tab="visibilidade">Matriz de Visibilidade</button>
+    <button class="tab-btn" data-tab="status">Status por Área x Atleta</button>
+  </div>
+
+  <!-- ================= PAINEL 1: SCORE (foco) ================= -->
+  <div class="panel active" id="panel-score">
+    <div class="filters">
+      <label>Atleta em destaque:</label>
+      <select id="atletaSel"></select>
+      <label>Comparar com:</label>
+      <select id="atletaSel2">
+        <option value="">— nenhum —</option>
+      </select>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Evolução do Score — 5 Checkpoints do Ciclo</h3>
+        <div class="sub">Linha do tempo de avaliações anteriores (histórico de atualizações da lista central do atleta)</div>
+        <canvas id="chartScoreLine" style="height:280px"></canvas>
+        <div class="legend-row" id="legendScore"></div>
+      </div>
+      <div class="card">
+        <h3>Score Atual — Todos os Atletas</h3>
+        <div class="sub">Checkpoint mais recente</div>
+        <canvas id="chartScoreBar" style="height:280px"></canvas>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Tendência (checkpoint 1 → 5)</h3>
+        <div class="sub">Variação percentual do score ao longo do ciclo</div>
+        <canvas id="chartVar" style="height:220px"></canvas>
+      </div>
+      <div class="card">
+        <h3>Histórico Detalhado — Avaliações Anteriores</h3>
+        <div class="sub" id="histSubtitle">Selecione um atleta acima para ver os 5 checkpoints</div>
+        <table id="histTable"><thead></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Comparativo entre Atletas (checkpoint mais recente)</h3>
+      <table id="cmpTable">
+        <thead><tr><th>Atleta</th><th>Categoria</th><th>Score Atual</th><th>% Aprov. Tático</th><th>% Aprov. Técnico</th><th>Tendência</th><th>Status Geral</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================= PAINEL 2: TÁTICO TÉCNICO ================= -->
+  <div class="panel" id="panel-tatico">
+    <div class="grid2">
+      <div class="card">
+        <h3>% Aproveitamento Tático — Checkpoint Mais Recente</h3>
+        <div class="sub">Fonte: lista "Tático Técnico" — referenciando o AtletaID</div>
+        <canvas id="chartTatico" style="height:260px"></canvas>
+      </div>
+      <div class="card">
+        <h3>% Aproveitamento Técnico — Checkpoint Mais Recente</h3>
+        <canvas id="chartTecnico" style="height:260px"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Registros na Lista Tático Técnico</h3>
+      <div class="sub">Brayan Bismark = dado real extraído da planilha original · demais atletas = simulação com o mesmo modelo</div>
+      <table id="tatTable"><thead><tr><th>Registro</th><th>Atleta</th><th>Data</th><th>Tipo</th><th>Comportamento / Técnica</th><th>Repetições</th><th>Acertos</th><th>Erros</th><th>%</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <!-- ================= PAINEL 3: KPIs DE JOGO ================= -->
+  <div class="panel" id="panel-kpis">
+    <div class="card">
+      <h3>KPIs de Jogo por Atleta</h3>
+      <div class="sub">Estrutura de acompanhamento por comportamento/fase — Brayan sem lançamento neste ciclo (dado real)</div>
+      <table id="kpiTable"><thead><tr><th>Atleta</th><th>Fase</th><th>KPI Selecionado</th><th>Jogo</th><th>Minutos</th><th>Nível de Jogo</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <!-- ================= PAINEL 4: SAÚDE / SOCIAL / PSICOLOGIA ================= -->
+  <div class="panel" id="panel-saude">
+    <div class="grid3" id="saudeCards"></div>
+    <div class="note">Dados de Nutrição, Serviço Social e Psicologia são sensíveis (LGPD): a Controladoria enxerga apenas o indicador agregado — nunca o conteúdo clínico/social detalhado.</div>
+  </div>
+
+  <!-- ================= PAINEL 5: MATRIZ DE VISIBILIDADE ================= -->
+  <div class="panel" id="panel-visibilidade">
+    <div class="card">
+      <h3>Quem enxerga o quê do mesmo atleta</h3>
+      <div class="sub">Governança de acesso por sensibilidade do dado</div>
+      <table id="visTable"><thead><tr><th>Lista / Área</th><th>Dado</th><th>Sensibilidade</th><th>Comissão Técnica</th><th>Departamento Médico</th><th>Controladoria</th></tr></thead><tbody></tbody></table>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:var(--verde)"></span>Acesso total</span>
+        <span><span class="legend-dot" style="background:var(--amarelo)"></span>Somente indicador</span>
+        <span><span class="legend-dot" style="background:var(--vermelho)"></span>Sem acesso</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PAINEL 6: STATUS POR ÁREA ================= -->
+  <div class="panel" id="panel-status">
+    <div class="card">
+      <h3>Status de Lançamento por Área x Atleta</h3>
+      <div class="sub">Radar de preenchimento das listas — o que já está "em dia" e o que falta lançar no ciclo</div>
+      <table id="statusTable"></table>
+    </div>
+  </div>
+
+</div>
+
+<footer>Fonte dos dados: Checkpoint PDI Ciclo 02 2026 (Brayan Bismark — dado real) + simulação de 3 atletas adicionais no mesmo modelo · klit Integradora de T.I. · Compatível com SharePoint (Canvas HTML5, zero dependências externas)</footer>
+
+<script>
+/* ================= DADOS (extraídos da simulação em Excel) ================= */
+const ATLETAS = [
+  {id:"BFC-SUB15-0007", nome:"Brayan Bismark", categoria:"Sub-15", posicao:"Meia", scoreBase:8.11, real:true},
+  {id:"BFC-SUB17-0012", nome:"Kaique Andrade", categoria:"Sub-17", posicao:"Zagueiro", scoreBase:7.42, real:false},
+  {id:"BFC-SUB20-0004", nome:"Rafael Nunes", categoria:"Sub-20", posicao:"Lateral", scoreBase:6.85, real:false},
+  {id:"BFC-SUB15-0015", nome:"Enzo Ferreira", categoria:"Sub-15", posicao:"Atacante", scoreBase:8.63, real:false},
+];
+
+const CORES = ["#0B4FA2","#F2C100","#3A78C2","#2E7D32"];
+
+const HIST = {
+  "BFC-SUB15-0007": [
+    {data:"01/05",score:8.18,tat:0.3028,tec:0.3914},
+    {data:"15/05",score:8.04,tat:0.3338,tec:0.4158},
+    {data:"29/05",score:8.24,tat:0.2934,tec:0.4122},
+    {data:"12/06",score:8.00,tat:0.2675,tec:0.4178},
+    {data:"26/06",score:7.76,tat:0.2394,tec:0.4393},
+  ],
+  "BFC-SUB17-0012": [
+    {data:"01/05",score:7.46,tat:0.4752,tec:0.3558},
+    {data:"15/05",score:7.61,tat:0.5011,tec:0.3702},
+    {data:"29/05",score:7.44,tat:0.5289,tec:0.4001},
+    {data:"12/06",score:7.24,tat:0.5401,tec:0.4177},
+    {data:"26/06",score:7.29,tat:0.5567,tec:0.4037},
+  ],
+  "BFC-SUB20-0004": [
+    {data:"01/05",score:6.79,tat:0.3120,tec:0.5588},
+    {data:"15/05",score:6.85,tat:0.3402,tec:0.5811},
+    {data:"29/05",score:6.95,tat:0.3599,tec:0.6021},
+    {data:"12/06",score:6.84,tat:0.3711,tec:0.6103},
+    {data:"26/06",score:6.64,tat:0.3840,tec:0.6186},
+  ],
+  "BFC-SUB15-0015": [
+    {data:"01/05",score:8.48,tat:0.3701,tec:0.4602},
+    {data:"15/05",score:8.55,tat:0.3889,tec:0.4744},
+    {data:"29/05",score:8.66,tat:0.4023,tec:0.4855},
+    {data:"12/06",score:8.90,tat:0.4109,tec:0.4931},
+    {data:"26/06",score:8.99,tat:0.4187,tec:0.5027},
+  ],
+};
+
+const CMP = [
+  {id:"BFC-SUB15-0007",nome:"Brayan Bismark",cat:"Sub-15",score:7.76,tat:0.2394,tec:0.4393,tend:"Em queda",status:"Em dia"},
+  {id:"BFC-SUB17-0012",nome:"Kaique Andrade",cat:"Sub-17",score:7.29,tat:0.5567,tec:0.4037,tend:"Em queda",status:"Em dia"},
+  {id:"BFC-SUB20-0004",nome:"Rafael Nunes",cat:"Sub-20",score:6.64,tat:0.3840,tec:0.6186,tend:"Em queda",status:"Atenção"},
+  {id:"BFC-SUB15-0015",nome:"Enzo Ferreira",cat:"Sub-15",score:8.99,tat:0.4187,tec:0.5027,tend:"Evoluindo",status:"Em dia"},
+];
+
+const TATICO_ROWS = [
+  ["TT-001","Brayan Bismark","26/05","Intervenção Tática","Ofensivo - Oferecer linhas de passe entre defensores",20,7,13,0.35],
+  ["TT-002","Brayan Bismark","22/05","Intervenção Técnica","Finalização",30,16,14,0.5333],
+  ["TT-003","Brayan Bismark","26/05","Intervenção Técnica","Passe",20,7,13,0.35],
+  ["TT-004","Brayan Bismark","26/05","Intervenção Técnica","Sem bola - Desmarque",20,7,13,0.35],
+  ["TT-005","Brayan Bismark","12/05","Intervenção Vídeo","Vídeo de uma equipe de alto nível","","","",""],
+  ["TT-006","Brayan Bismark","15/05","Intervenção Vídeo","Vídeo de jogo","","","",""],
+  ["TT-007","Brayan Bismark","19/05","Ocorrência","Não comparecimento justificado (Viagem)","","","",""],
+  ["TT-008","Kaique Andrade","03/05","Intervenção Tática","Defensivo - Reduzir opções de passe sob pressão",25,14,11,0.56],
+  ["TT-009","Kaique Andrade","10/05","Intervenção Técnica","Cruzamento",20,12,8,0.60],
+  ["TT-010","Kaique Andrade","17/05","Intervenção Tática","Defensivo - Proteger linha de bolas aéreas",15,9,6,0.60],
+  ["TT-013","Rafael Nunes","04/05","Intervenção Técnica","Domínio orientado",25,15,10,0.60],
+  ["TT-014","Rafael Nunes","11/05","Intervenção Tática","Ofensivo - Identificar espaços na área",20,7,13,0.35],
+  ["TT-018","Enzo Ferreira","05/05","Intervenção Técnica","Desarme",30,19,11,0.6333],
+  ["TT-019","Enzo Ferreira","12/05","Intervenção Tática","Ofensivo - Oferecer linhas de passe",20,9,11,0.45],
+];
+
+const KPI_ROWS = [
+  ["Kaique Andrade","Defensiva","Nº de pressões efetivas que resultaram em recuperação de bola","Jogo 1",20,"Jogo nível B"],
+  ["Kaique Andrade","Ofensiva","Nº de finalizações no gol","Jogo 2",25,"Jogo nível A"],
+  ["Rafael Nunes","Defensiva","Nº de linhas de passe interceptada por jogo","Jogo 1",30,"Jogo nível C"],
+  ["Rafael Nunes","Ofensiva","Nº de passes recebidos entrelinhas sem perda de posse","Jogo 2",15,"Jogo nível B"],
+  ["Enzo Ferreira","Ofensiva","Nº de finalizações no gol","Jogo 1",35,"Jogo nível A"],
+  ["Enzo Ferreira","Defensiva","Nº de pressões efetivas que resultaram em recuperação de bola","Jogo 2",20,"Jogo nível B"],
+];
+
+const SAUDE_STATUS = {
+  "Físico":      {emdia:3, pendente:1},
+  "Nutrição":    {emdia:3, pendente:1},
+  "Serviço Social": {emdia:3, pendente:1},
+  "Psicologia":  {emdia:3, pendente:1},
+};
+
+const VIS_ROWS = [
+  ["Cadastro Central","Nome, categoria, posição, idade, score geral","Aberto","Total","Total","Total"],
+  ["Tático Técnico","Intervenções, % aproveitamento, ocorrências","Interno","Total","Somente indicador","Somente indicador"],
+  ["KPIs de Jogo","KPIs por comportamento e jogo","Interno","Total","Não vê","Somente indicador"],
+  ["Físico","Testes, resultados, plano de ação","Restrito","Somente indicador","Total","Somente indicador"],
+  ["Nutrição","Objetivo, plano alimentar, adesão","Sensível","Não vê","Total","Somente indicador agregado"],
+  ["Serviço Social","Objetivo social, ocorrência, situação familiar","Sensível","Não vê","Não vê","Somente indicador agregado"],
+  ["Psicologia","Objetivo, plano, ocorrência clínica","Muito Sensível","Não vê","Não vê","Somente indicador agregado"],
+];
+
+const STATUS_MATRIX = {
+  areas: ["Tático Técnico","KPIs de Jogo","Físico","Nutrição","Serviço Social","Psicologia"],
+  rows: [
+    {nome:"Brayan Bismark", vals:["Em dia","Pendente","Pendente","Pendente","Pendente","Pendente"]},
+    {nome:"Kaique Andrade", vals:["Em dia","Em dia","Em dia","Em dia","Em dia","Em dia"]},
+    {nome:"Rafael Nunes",   vals:["Em dia","Em dia","Em dia","Em dia","Em dia","Em dia"]},
+    {nome:"Enzo Ferreira",  vals:["Em dia","Em dia","Em dia","Em dia","Em dia","Em dia"]},
+  ]
+};
+
+/* ================= TOOLTIP ================= */
+const TIP = document.getElementById('tooltip');
+function showTip(ev, lines){ TIP.innerHTML = lines.join('<br>'); TIP.style.display='block'; moveTip(ev); }
+function moveTip(ev){ TIP.style.left=(ev.clientX+14)+'px'; TIP.style.top=(ev.clientY-10)+'px'; }
+function hideTip(){ TIP.style.display='none'; }
+
+/* ================= HELPERS ================= */
+const fPct = v => (v*100).toFixed(1)+'%';
+function setupCanvas(canvas, defaultH){
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.offsetWidth, H = canvas.offsetHeight || defaultH;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  return {ctx,W,H};
+}
+function drawGrid(ctx,PAD,cW,cH,maxV,minV){
+  const n=5;
+  ctx.strokeStyle='#e3ebf5'; ctx.lineWidth=1;
+  ctx.fillStyle='#7a8ba0'; ctx.font='11px Segoe UI,Arial'; ctx.textAlign='right';
+  for(let i=0;i<=n;i++){
+    const v=minV+(maxV-minV)*i/n;
+    const y=PAD.top+cH-(v-minV)/(maxV-minV)*cH;
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cW,y);ctx.stroke();
+    ctx.fillText(v.toFixed(1),PAD.left-6,y+4);
+  }
+}
+
+/* ---- Line chart (score ao longo do tempo) ---- */
+function drawLineChart(canvas, labels, series, opts={}){
+  const {ctx,W,H} = setupCanvas(canvas,280);
+  const PAD={top:20,right:20,bottom:40,left:40};
+  const cW=W-PAD.left-PAD.right, cH=H-PAD.top-PAD.bottom;
+  const allV = series.flatMap(s=>s.data);
+  const maxV = Math.ceil(Math.max(...allV)+0.5);
+  const minV = Math.floor(Math.min(...allV)-0.5);
+  drawGrid(ctx,PAD,cW,cH,maxV,minV);
+  const stepX = cW/(labels.length-1);
+  const tips=[];
+  series.forEach(s=>{
+    ctx.strokeStyle=s.color; ctx.lineWidth=2.5; ctx.beginPath();
+    s.data.forEach((v,i)=>{
+      const x=PAD.left+i*stepX, y=PAD.top+cH-(v-minV)/(maxV-minV)*cH;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    s.data.forEach((v,i)=>{
+      const x=PAD.left+i*stepX, y=PAD.top+cH-(v-minV)/(maxV-minV)*cH;
+      ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle=s.color; ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+      tips.push({x:x-6,y:y-6,w:12,h:12,label:s.label,val:v,cat:labels[i]});
+    });
+  });
+  ctx.fillStyle='#163028'; ctx.font='10px Segoe UI,Arial'; ctx.textAlign='center';
+  labels.forEach((lb,i)=>ctx.fillText(lb,PAD.left+i*stepX,H-PAD.bottom+18));
+
+  canvas.onmousemove = ev=>{
+    const r=canvas.getBoundingClientRect();
+    const mx=ev.clientX-r.left, my=ev.clientY-r.top;
+    const hit=tips.find(t=>mx>=t.x&&mx<=t.x+t.w&&my>=t.y&&my<=t.y+t.h);
+    if(hit) showTip(ev,[`<b>${hit.label}</b>`,`${hit.cat}: <b>${hit.val.toFixed(2)}</b>`]);
+    else hideTip();
+  };
+  canvas.onmouseleave = hideTip;
+}
+
+/* ---- Colored bar chart ---- */
+function drawColoredBar(canvas, labels, values, colors, opts={}){
+  const {ctx,W,H} = setupCanvas(canvas,260);
+  const PAD={top:20,right:20,bottom:44,left:opts.pct?46:40};
+  const cW=W-PAD.left-PAD.right, cH=H-PAD.top-PAD.bottom;
+  const maxV = opts.pct ? 1 : Math.max(...values)*1.15;
+  drawGrid(ctx,PAD,cW,cH,maxV,0);
+  const barW = Math.min(cW/labels.length*0.55,44);
+  const tips=[];
+  labels.forEach((lb,i)=>{
+    const v=values[i], bh=v/maxV*cH;
+    const bx=PAD.left+i*cW/labels.length+(cW/labels.length-barW)/2;
+    ctx.fillStyle=colors[i];
+    ctx.beginPath(); ctx.roundRect(bx,PAD.top+cH-bh,barW,bh,[4,4,0,0]); ctx.fill();
+    tips.push({x:bx,y:PAD.top+cH-bh,w:barW,h:bh,val:v,cat:lb});
+    ctx.fillStyle='#163028'; ctx.font='bold 10px Segoe UI,Arial'; ctx.textAlign='center';
+    ctx.fillText(opts.pct?fPct(v):v.toFixed(2), bx+barW/2, PAD.top+cH-bh-6);
+  });
+  ctx.fillStyle='#163028'; ctx.font='bold 10px Segoe UI,Arial'; ctx.textAlign='center';
+  labels.forEach((lb,i)=>ctx.fillText(lb,PAD.left+i*cW/labels.length+cW/labels.length/2,H-PAD.bottom+16));
+  canvas.onmousemove = ev=>{
+    const r=canvas.getBoundingClientRect();
+    const mx=ev.clientX-r.left, my=ev.clientY-r.top;
+    const hit=tips.find(t=>mx>=t.x&&mx<=t.x+t.w&&my>=t.y&&my<=t.y+t.h);
+    if(hit) showTip(ev,[`<b>${hit.cat}</b>`,opts.pct?fPct(hit.val):hit.val.toFixed(2)]);
+    else hideTip();
+  };
+  canvas.onmouseleave=hideTip;
+}
+
+/* ---- Var bar (variação %) ---- */
+function drawVarBar(canvas, labels, values){
+  const {ctx,W,H} = setupCanvas(canvas,220);
+  const PAD={top:20,right:20,bottom:40,left:50};
+  const cW=W-PAD.left-PAD.right, cH=H-PAD.top-PAD.bottom;
+  const maxAbs = Math.max(...values.map(Math.abs))*1.3 || 0.1;
+  const y0 = PAD.top+cH/2;
+  ctx.strokeStyle='#e3ebf5'; ctx.fillStyle='#7a8ba0'; ctx.font='10px Segoe UI,Arial'; ctx.textAlign='right';
+  [-2,-1,0,1,2].forEach(i=>{
+    const v=i*maxAbs/2, y=y0-v/maxAbs*cH/2;
+    ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(PAD.left+cW,y); ctx.stroke();
+    ctx.fillText((v*100).toFixed(0)+'%',PAD.left-6,y+4);
+  });
+  const barW=Math.min(cW/labels.length*0.5,40);
+  const tips=[];
+  labels.forEach((lb,i)=>{
+    const v=values[i], bh=Math.abs(v)/maxAbs*cH/2;
+    const bx=PAD.left+i*cW/labels.length+(cW/labels.length-barW)/2;
+    const by=v>=0?y0-bh:y0;
+    ctx.fillStyle=v>=0?'#2E7D32':'#C62828';
+    ctx.beginPath(); ctx.roundRect(bx,by,barW,bh,[3,3,0,0]); ctx.fill();
+    tips.push({x:bx,y:by,w:barW,h:bh,val:v,cat:lb});
+  });
+  ctx.strokeStyle='#163028'; ctx.beginPath(); ctx.moveTo(PAD.left,y0); ctx.lineTo(PAD.left+cW,y0); ctx.stroke();
+  ctx.fillStyle='#163028'; ctx.font='bold 10px Segoe UI,Arial'; ctx.textAlign='center';
+  labels.forEach((lb,i)=>ctx.fillText(lb,PAD.left+i*cW/labels.length+cW/labels.length/2,H-PAD.bottom+16));
+  canvas.onmousemove = ev=>{
+    const r=canvas.getBoundingClientRect();
+    const mx=ev.clientX-r.left, my=ev.clientY-r.top;
+    const hit=tips.find(t=>mx>=t.x&&mx<=t.x+t.w&&my>=Math.min(t.y,t.y+t.h-2)&&my<=Math.max(t.y+t.h,t.y+2));
+    if(hit) showTip(ev,[`<b>${hit.cat}</b>`,`Variação: <b>${(hit.val>=0?'+':'')+(hit.val*100).toFixed(1)}%</b>`]);
+    else hideTip();
+  };
+  canvas.onmouseleave=hideTip;
+}
+
+/* ================= KPIs GERAIS ================= */
+function renderKPIs(){
+  const scores = CMP.map(a=>a.score);
+  const media = (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2);
+  const alertas = CMP.filter(a=>a.status==='Atenção').length;
+  const pendentes = STATUS_MATRIX.rows.reduce((s,r)=>s+r.vals.filter(v=>v==='Pendente').length,0);
+  const kpis = [
+    {lbl:'Atletas Monitorados', val:ATLETAS.length, sub:'1 dado real + 3 simulados', cls:''},
+    {lbl:'Score Médio (mais recente)', val:media.replace('.',','), sub:'Checkpoint 5 de 5', cls: media>=7?'ok':'warn'},
+    {lbl:'Atletas em Atenção', val:alertas, sub:'Status geral abaixo do esperado', cls: alertas>0?'alert':'ok'},
+    {lbl:'Lançamentos Pendentes', val:pendentes, sub:'Áreas sem registro no ciclo', cls: pendentes>0?'warn':'ok'},
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.cls}">
+      <div class="kpi-lbl">${k.lbl}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+/* ================= PAINEL SCORE ================= */
+function fillAtletaSelects(){
+  const sel1 = document.getElementById('atletaSel');
+  const sel2 = document.getElementById('atletaSel2');
+  ATLETAS.forEach(a=>{
+    sel1.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+    sel2.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+  });
+}
+
+function renderScorePanel(){
+  const labels = HIST[ATLETAS[0].id].map(h=>h.data);
+
+  // line chart - todos os atletas
+  const series = ATLETAS.map((a,i)=>({label:a.nome, color:CORES[i], data:HIST[a.id].map(h=>h.score)}));
+  drawLineChart(document.getElementById('chartScoreLine'), labels, series);
+  document.getElementById('legendScore').innerHTML = ATLETAS.map((a,i)=>
+    `<span><span class="legend-dot" style="background:${CORES[i]}"></span>${a.nome}${a.real?' (real)':' (simulado)'}</span>`).join('');
+
+  // bar chart score atual
+  drawColoredBar(document.getElementById('chartScoreBar'), CMP.map(a=>a.nome.split(' ')[0]), CMP.map(a=>a.score), CORES);
+
+  // var bar - variação checkpoint1 -> 5
+  const varLabels = ATLETAS.map(a=>a.nome.split(' ')[0]);
+  const varValues = ATLETAS.map(a=>{
+    const h = HIST[a.id];
+    return (h[4].score - h[0].score) / h[0].score;
+  });
+  drawVarBar(document.getElementById('chartVar'), varLabels, varValues);
+
+  // tabela comparativa
+  const cmpBody = document.querySelector('#cmpTable tbody');
+  cmpBody.innerHTML = CMP.map(a=>{
+    const tendCls = a.tend==='Evoluindo'?'b-verde':(a.tend==='Estável'?'b-amarelo':'b-vermelho');
+    const statCls = a.status==='Em dia'?'b-verde':'b-amarelo';
+    return `<tr><td>${a.nome}</td><td>${a.cat}</td><td><b>${a.score.toFixed(2)}</b></td>
+      <td>${fPct(a.tat)}</td><td>${fPct(a.tec)}</td>
+      <td><span class="badge ${tendCls}">${a.tend}</span></td>
+      <td><span class="badge ${statCls}">${a.status}</span></td></tr>`;
+  }).join('');
+
+  renderHistTable(ATLETAS[0].id);
+}
+
+function renderHistTable(atletaId){
+  const a = ATLETAS.find(x=>x.id===atletaId);
+  const h = HIST[atletaId];
+  document.getElementById('histSubtitle').innerHTML = `<b>${a.nome}</b> — ${a.categoria} · ${a.posicao} ${a.real?'· dado real':'· simulado'}`;
+  const thead = document.querySelector('#histTable thead');
+  const tbody = document.querySelector('#histTable tbody');
+  thead.innerHTML = '<tr><th>Checkpoint</th><th>Data</th><th>Score</th><th>% Tático</th><th>% Técnico</th></tr>';
+  tbody.innerHTML = h.map((row,i)=>`<tr><td>Checkpoint ${i+1}</td><td>${row.data}</td><td><b>${row.score.toFixed(2)}</b></td><td>${fPct(row.tat)}</td><td>${fPct(row.tec)}</td></tr>`).join('');
+}
+
+document.getElementById('atletaSel').addEventListener('change', e=>renderHistTable(e.target.value));
+
+/* ================= PAINEL TÁTICO TÉCNICO ================= */
+function renderTaticoPanel(){
+  drawColoredBar(document.getElementById('chartTatico'), CMP.map(a=>a.nome.split(' ')[0]), CMP.map(a=>a.tat), CORES, {pct:true});
+  drawColoredBar(document.getElementById('chartTecnico'), CMP.map(a=>a.nome.split(' ')[0]), CMP.map(a=>a.tec), CORES, {pct:true});
+  const tbody = document.querySelector('#tatTable tbody');
+  tbody.innerHTML = TATICO_ROWS.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td><td>${r[8]===''?'':fPct(r[8])}</td></tr>`).join('');
+}
+
+/* ================= PAINEL KPIs ================= */
+function renderKpiPanel(){
+  const tbody = document.querySelector('#kpiTable tbody');
+  tbody.innerHTML = KPI_ROWS.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td></tr>`).join('') +
+    `<tr><td colspan="6" style="font-style:italic;color:var(--txt-secundario)">Brayan Bismark: nenhum jogo lançado neste ciclo (dado real da planilha original)</td></tr>`;
+}
+
+/* ================= PAINEL SAÚDE ================= */
+function renderSaudePanel(){
+  const cards = Object.entries(SAUDE_STATUS).map(([area,st])=>{
+    const total = st.emdia+st.pendente;
+    const pct = st.emdia/total;
+    return `<div class="card">
+      <h3>${area}</h3>
+      <div class="sub">Lançamentos no ciclo</div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin:10px 0">
+        <span style="font-size:1.8rem;font-weight:700;color:var(--azul-escuro)">${st.emdia}/${total}</span>
+        <span class="badge ${pct>=0.75?'b-verde':'b-amarelo'}">${(pct*100).toFixed(0)}% em dia</span>
+      </div>
+      <div style="background:#E3EDF9;border-radius:8px;height:10px;overflow:hidden">
+        <div style="width:${pct*100}%;background:var(--azul-principal);height:100%"></div>
+      </div>
+      <div class="note">Brayan Bismark pendente (dado real, sem lançamento) · demais 3 em dia (simulado)</div>
+    </div>`;
+  }).join('');
+  document.getElementById('saudeCards').innerHTML = cards;
+}
+
+/* ================= PAINEL VISIBILIDADE ================= */
+function renderVisPanel(){
+  const cls = v => v==='Total'?'b-verde':(v.startsWith('Somente')?'b-amarelo':(v==='Não vê'?'b-vermelho':''));
+  const tbody = document.querySelector('#visTable tbody');
+  tbody.innerHTML = VIS_ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td>
+    <td><span class="badge ${cls(r[3])}">${r[3]}</span></td>
+    <td><span class="badge ${cls(r[4])}">${r[4]}</span></td>
+    <td><span class="badge ${cls(r[5])}">${r[5]}</span></td></tr>`).join('');
+}
+
+/* ================= PAINEL STATUS ================= */
+function renderStatusPanel(){
+  const t = document.getElementById('statusTable');
+  let html = '<thead><tr><th>Atleta</th>' + STATUS_MATRIX.areas.map(a=>`<th>${a}</th>`).join('') + '</tr></thead><tbody>';
+  STATUS_MATRIX.rows.forEach(r=>{
+    html += `<tr><td><b>${r.nome}</b></td>` + r.vals.map(v=>`<td><span class="badge ${v==='Em dia'?'b-verde':'b-vermelho'}">${v}</span></td>`).join('') + '</tr>';
+  });
+  html += '</tbody>';
+  t.innerHTML = html;
+}
+
+/* ================= TABS ================= */
+const RENDER_BY_TAB = {
+  score: renderScorePanel,
+  tatico: renderTaticoPanel,
+  kpis: renderKpiPanel,
+  saude: renderSaudePanel,
+  visibilidade: renderVisPanel,
+  status: renderStatusPanel,
+};
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    const fn = RENDER_BY_TAB[btn.dataset.tab];
+    if(fn) fn();
+  });
+});
+
+/* ================= INIT ================= */
+function init(){
+  renderKPIs();
+  fillAtletaSelects();
+  renderScorePanel();
+  renderTaticoPanel();
+  renderKpiPanel();
+  renderSaudePanel();
+  renderVisPanel();
+  renderStatusPanel();
+}
+init();
+window.addEventListener('resize', ()=>{
+  clearTimeout(window._rt);
+  window._rt = setTimeout(()=>{
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+    const fn = RENDER_BY_TAB[activeTab];
+    if(fn) fn();
+  },150);
+});
+</script>
+</body>
+</html>
