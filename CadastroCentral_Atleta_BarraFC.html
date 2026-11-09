@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadastro Central do Atleta — Registro · BarraFC</title>
+<!--
+  SIMULAÇÃO DE SITE SHAREPOINT — Equipe Registro · Cadastro Central do Atleta
+  COMPATÍVEL COM SHAREPOINT
+  • Sem dependências externas — zero CDN, zero imports (gráficos em Canvas HTML5)
+  • Para incorporar: upload no SharePoint → copie o URL → Embed web part → <iframe src="URL">
+  • Para uso real: Site de Equipe + Lista com colunas "Choice" + formulário Power Apps (ver "Base de Dados (Opções)")
+-->
+<style>
+:root{
+  --sp-blue:#0078D4;--sp-blue-dark:#004E8C;--sp-bg:#FAF9F8;--sp-text:#242424;--sp-sub:#616161;--sp-border:#E1DFDD;--sp-hover:#F3F2F1;
+  --azul-escuro:#083B7A;--azul-principal:#0B4FA2;--azul-claro:#3A78C2;--destaque:#F2C100;--verde:#2E7D32;--vermelho:#C62828;--ambar:#B26A00;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',Aptos,Arial,sans-serif;background:var(--sp-bg);color:var(--sp-text);font-size:14px}
+button{font-family:inherit}
+.suitebar{background:var(--sp-blue-dark);color:#fff;display:flex;align-items:center;height:48px;padding:0 12px;gap:14px;font-size:13px}
+.waffle{width:20px;height:20px;display:grid;grid-template-columns:repeat(3,5px);grid-template-rows:repeat(3,5px);gap:2px}
+.waffle span{background:#fff;display:block}
+.sp-logo{font-weight:600}
+.suitebar .search{margin-left:auto;background:rgba(255,255,255,.15);border-radius:4px;padding:6px 12px;font-size:12.5px;width:260px;color:#e8f0fb}
+.suitebar .icons{display:flex;gap:16px;align-items:center}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--destaque);color:#083B7A;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.sitehead{background:#fff;border-bottom:1px solid var(--sp-border);padding:14px 32px}
+.crumb{font-size:11.5px;color:var(--sp-sub);margin-bottom:6px}
+.sitehead .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sitehead .icon{width:56px;height:56px;border-radius:8px;background:var(--azul-principal);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff}
+.sitehead h1{margin:0;font-size:1.4rem;font-weight:600}
+.sitehead .desc{font-size:12.5px;color:var(--sp-sub);margin-top:2px}
+.members{margin-left:auto;text-align:right;font-size:12px;color:var(--sp-sub)}
+.members .btn{display:inline-block;margin-top:4px;background:var(--sp-blue);color:#fff;padding:5px 14px;border-radius:3px;font-size:12.5px;font-weight:600;cursor:pointer}
+.sitenav{background:#fff;border-bottom:1px solid var(--sp-border);padding:0 32px;display:flex;gap:2px;overflow-x:auto}
+.sitenav a{padding:11px 14px;font-size:13px;color:var(--sp-text);text-decoration:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.sitenav a.active{border-bottom-color:var(--sp-blue);color:var(--sp-blue);font-weight:600}
+.sitenav a:hover{background:var(--sp-hover)}
+.layout{display:flex;max-width:1560px;margin:0 auto}
+.leftnav{width:236px;padding:20px 12px;flex-shrink:0}
+.section-lbl{font-size:11px;text-transform:uppercase;color:var(--sp-sub);font-weight:600;padding:6px 12px;letter-spacing:.4px}
+.leftnav a{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13.5px;color:var(--sp-text);text-decoration:none;border-radius:4px;margin-bottom:1px;cursor:pointer}
+.leftnav a:hover{background:var(--sp-hover)}
+.leftnav a.active{background:#EDF3FC;color:var(--sp-blue);font-weight:600;border-left:3px solid var(--sp-blue);padding-left:9px}
+.leftnav .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.leftnav .lock{margin-left:auto;font-size:11px;opacity:.6}
+.content{flex:1;padding:20px 32px 60px;min-width:0}
+@media(max-width:900px){.leftnav{display:none}.content{padding:16px}.sitehead,.sitenav{padding-left:16px;padding-right:16px}}
+
+.webpart{background:#fff;border:1px solid var(--sp-border);border-radius:4px;margin-bottom:22px}
+.webpart-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--sp-border);gap:12px;flex-wrap:wrap}
+.webpart-head h2{margin:0;font-size:1.05rem;font-weight:600}
+.webpart-head .sub{font-size:12px;color:var(--sp-sub);margin-top:2px}
+.wp-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wp-body{padding:16px 18px}
+.btn-primary{background:var(--sp-blue);color:#fff;border:none;padding:7px 16px;border-radius:3px;font-size:12.5px;font-weight:600;cursor:pointer}
+.btn-primary:hover{background:#106EBE}
+.btn-secondary{background:#fff;color:var(--sp-text);border:1px solid #8A8886;padding:7px 14px;border-radius:3px;font-size:12.5px;cursor:pointer}
+.btn-secondary:hover{background:var(--sp-hover)}
+.btn-danger{background:#fff;color:var(--vermelho);border:1px solid var(--vermelho);padding:7px 14px;border-radius:3px;font-size:12.5px;cursor:pointer}
+.btn-primary:disabled,.btn-secondary:disabled,.btn-danger:disabled{opacity:.45;cursor:not-allowed}
+
+/* KPI strip */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kpi-strip .kpi{padding:14px 18px;border-right:1px solid var(--sp-border);border-bottom:1px solid var(--sp-border)}
+.kpi .lbl{font-size:11px;color:var(--sp-sub);text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.kpi .val{font-size:1.5rem;font-weight:700;color:var(--azul-escuro);margin-top:4px}
+.kpi .sub{font-size:11.5px;color:var(--sp-sub);margin-top:2px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:18px}
+.kcard{background:#fff;border-radius:10px;padding:14px 16px;border-left:5px solid var(--azul-principal);box-shadow:0 1px 4px rgba(8,59,122,.08)}
+.kcard .lbl{font-size:.7rem;color:var(--sp-sub);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.kcard .val{font-size:1.65rem;font-weight:700;color:var(--azul-escuro);margin-top:4px}
+.kcard .sub{font-size:.72rem;color:var(--sp-sub);margin-top:3px}
+.kcard.ok{border-left-color:var(--verde)}.kcard.warn{border-left-color:var(--destaque)}.kcard.alert{border-left-color:var(--vermelho)}
+
+/* list table */
+.list-toolbar{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--sp-border);font-size:12.5px;color:var(--sp-sub);flex-wrap:wrap}
+.list-toolbar input[type=text],.list-toolbar select,.filters select{border:1px solid var(--sp-border);border-radius:3px;padding:5px 10px;font-size:12.5px;font-family:inherit;background:#fff}
+.list-toolbar input[type=text]{width:220px}
+.viewsel{margin-left:auto}
+table.splist{width:100%;border-collapse:collapse;font-size:12.8px}
+table.splist th{background:#F8F8F8;color:var(--sp-sub);font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--sp-border);font-size:12px;white-space:nowrap;position:sticky;top:0;cursor:pointer;user-select:none}
+table.splist th:hover{background:#EFEFEF;color:var(--sp-blue)}
+table.splist td{padding:9px 12px;border-bottom:1px solid #F0F0F0;white-space:nowrap}
+table.splist tbody tr{cursor:pointer}
+table.splist tbody tr:hover td{background:#F3F9FD}
+table.splist td.wrap{white-space:normal;min-width:260px;max-width:380px}
+.pill{display:inline-block;padding:2px 10px;border-radius:11px;font-size:11.3px;font-weight:600}
+.pill-of{background:#E3F3E8;color:var(--verde)}.pill-def{background:#FCE9E9;color:var(--vermelho)}.pill-video{background:#EAF1FB;color:var(--azul-principal)}.pill-ocorr{background:#FDF2D9;color:#9A6B00}
+.pill-gray{background:#EEE;color:#555}.pill-ok{background:#E3F3E8;color:var(--verde)}.pill-warn{background:#FDF2D9;color:#9A6B00}.pill-bad{background:#FCE9E9;color:var(--vermelho)}
+.badge-count{background:var(--sp-blue);color:#fff;border-radius:9px;font-size:11px;padding:1px 8px;margin-left:8px}
+.empty{padding:36px;text-align:center;color:var(--sp-sub)}
+.chip-filter{border:1px solid var(--sp-border);background:#fff;border-radius:14px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--sp-text)}
+.chip-filter.on{background:#EDF3FC;border-color:var(--sp-blue);color:var(--sp-blue);font-weight:600}
+
+/* generic */
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px}.grid2e{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1000px){.grid2,.grid2e,.grid3{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 4px rgba(8,59,122,.08);margin-bottom:16px}
+.card h3{margin:0 0 4px;font-size:1rem;color:var(--azul-escuro)}
+.card .sub{font-size:.78rem;color:var(--sp-sub);margin-bottom:10px}
+.card canvas{width:100%;display:block}
+.note{font-size:.75rem;color:var(--sp-sub);font-style:italic;margin-top:8px}
+.tabs{display:flex;gap:6px;border-bottom:2px solid var(--sp-border);margin-bottom:16px;flex-wrap:wrap}
+.tab-btn{background:none;border:none;padding:9px 16px;font-size:.85rem;font-weight:600;color:var(--sp-sub);cursor:pointer;border-bottom:3px solid transparent;border-radius:6px 6px 0 0}
+.tab-btn:hover{background:#E3EDF9;color:var(--azul-escuro)}
+.tab-btn.active{color:var(--azul-principal);border-bottom-color:var(--destaque);background:#fff}
+.filters{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;background:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 1px 4px rgba(8,59,122,.08)}
+.filters label{font-size:.78rem;color:var(--sp-sub);font-weight:600}
+table.t2{width:100%;border-collapse:collapse;font-size:.82rem}
+table.t2 th,table.t2 td{padding:8px 10px;border-bottom:1px solid #DCE6F2;text-align:left}
+table.t2 th{background:var(--azul-principal);color:#fff;font-size:.72rem;text-transform:uppercase;letter-spacing:.3px}
+table.t2 tr:nth-child(even) td{background:#F5F9FD}
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:.72rem;font-weight:700;color:#fff}
+.b-verde{background:var(--verde)}.b-vermelho{background:var(--vermelho)}.b-amarelo{background:var(--destaque);color:#0A0A0A}.b-azul{background:var(--azul-claro)}.b-cinza{background:#8A8886}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;font-size:.75rem;color:var(--sp-sub);margin-top:10px}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.heat td.hc{text-align:center;font-weight:700;color:#fff;min-width:74px}
+#tooltip{position:fixed;background:var(--azul-escuro);color:#fff;padding:7px 12px;border-radius:7px;font-size:.72rem;pointer-events:none;display:none;box-shadow:0 3px 10px rgba(0,0,0,.3);z-index:9999;line-height:1.6}
+
+/* home */
+.hero{background:linear-gradient(135deg,var(--azul-escuro),var(--azul-principal));color:#fff;border-radius:6px;padding:26px 28px;margin-bottom:22px}
+.hero h2{margin:0 0 6px;font-size:1.4rem}.hero p{margin:0;color:#CFE0F5;font-size:.9rem;max-width:760px}
+.qlinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.qlink{background:#fff;border:1px solid var(--sp-border);border-radius:6px;padding:16px;cursor:pointer;border-top:4px solid var(--azul-principal)}
+.qlink:hover{box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.qlink b{display:block;margin-bottom:4px}.qlink span{font-size:12px;color:var(--sp-sub)}
+.rule{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:13px}
+.rule:last-child{border:none}.rule i{font-style:normal;color:var(--verde);font-weight:700}
+.feed-item{padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:12.8px}.feed-item small{color:var(--sp-sub);display:block}
+.progress{background:#E3EDF9;border-radius:8px;height:10px;overflow:hidden}.progress>div{background:var(--azul-principal);height:100%}
+
+/* field cards */
+.field-card{border:1px solid var(--sp-border);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.field-head{background:#F8F8F8;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--sp-border);gap:8px}
+.field-head .name{font-weight:600;font-size:13.5px}
+.field-head .type{font-size:11px;color:var(--sp-sub);background:#fff;border:1px solid var(--sp-border);padding:2px 8px;border-radius:10px}
+.field-body{padding:12px 16px}
+.choice-chip{display:inline-block;background:#EDF3FC;color:var(--azul-principal);border:1px solid #C7DCF5;padding:4px 11px;border-radius:4px;font-size:12px;margin:3px 5px 3px 0}
+.field-note{font-size:11.5px;color:var(--sp-sub);margin-top:8px;font-style:italic}
+
+/* docs */
+.fileicon{display:inline-block;width:22px;text-align:center;margin-right:6px}
+.folder-link{color:var(--sp-blue);cursor:pointer;font-weight:600}.folder-link:hover{text-decoration:underline}
+
+/* notes */
+.notes{display:grid;grid-template-columns:170px 220px 1fr;min-height:430px;border:1px solid var(--sp-border);border-radius:4px;background:#fff}
+.notes>div{padding:10px;border-right:1px solid var(--sp-border)}.notes>div:last-child{border:none}
+.notes .nsec{padding:8px 10px;border-radius:4px;cursor:pointer;font-size:13px;margin-bottom:3px}
+.notes .nsec.on{background:#EDF3FC;color:var(--sp-blue);font-weight:600}
+.notes .npage{padding:8px 10px;border-bottom:1px solid #F0F0F0;cursor:pointer;font-size:13px}.notes .npage.on{background:#FFF8D6}
+.notes input.ntitle{width:100%;font-size:1.2rem;font-weight:600;border:none;border-bottom:1px solid var(--sp-border);padding:6px 0;margin-bottom:8px;outline:none;font-family:inherit}
+.notes textarea{width:100%;height:330px;border:none;outline:none;resize:none;font-family:inherit;font-size:13.5px;line-height:1.6}
+@media(max-width:800px){.notes{grid-template-columns:1fr}}
+
+/* slide-over + modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;z-index:1000}
+.overlay.on{display:block}
+.panel{position:fixed;top:0;right:0;height:100%;width:min(480px,100%);background:#fff;box-shadow:-4px 0 18px rgba(0,0,0,.25);z-index:1001;transform:translateX(100%);transition:.2s;display:flex;flex-direction:column}
+.panel.on{transform:none}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--sp-border);display:flex;justify-content:space-between;align-items:center}
+.panel-head h3{margin:0;font-size:1.05rem}
+.xbtn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--sp-sub)}
+.panel-body{padding:16px 20px;overflow:auto;flex:1}
+.dl{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;font-size:13px;margin-bottom:16px}.dl dt{color:var(--sp-sub)}.dl dd{margin:0;font-weight:500}
+.modal{position:fixed;top:4vh;left:50%;transform:translateX(-50%);width:min(760px,96vw);max-height:92vh;background:#fff;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.35);z-index:1002;display:none;flex-direction:column}
+.modal.on{display:flex}
+.modal-head{padding:16px 22px;border-bottom:1px solid var(--sp-border);display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{margin:0;font-size:1.1rem}
+.modal-body{padding:18px 22px;overflow:auto}
+.modal-foot{padding:12px 22px;border-top:1px solid var(--sp-border);display:flex;gap:8px;justify-content:flex-end;align-items:center;background:#FAFAFA;border-radius:0 0 6px 6px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.fgrid .full{grid-column:1/-1}
+@media(max-width:640px){.fgrid{grid-template-columns:1fr}}
+.fld label{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px}
+.fld label .req{color:var(--vermelho)}
+.fld input,.fld select,.fld textarea{width:100%;padding:7px 9px;border:1px solid #8A8886;border-radius:3px;font-size:13px;font-family:inherit;background:#fff}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid var(--sp-blue);outline-offset:-1px;border-color:var(--sp-blue)}
+.fld input[readonly]{background:#F3F2F1;color:#555}
+.fld .hint{font-size:11.5px;color:var(--sp-sub);margin-top:3px}
+.fld.err input,.fld.err select,.fld.err textarea{border-color:var(--vermelho);background:#FFF6F6}
+.fld .emsg{color:var(--vermelho);font-size:11.5px;margin-top:3px;display:none}
+.fld.err .emsg{display:block}
+.fsec{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--azul-principal);font-weight:700;border-bottom:1px solid var(--sp-border);padding-bottom:4px;margin-top:6px}
+.infobox{grid-column:1/-1;background:#EAF1FB;border-left:4px solid var(--azul-principal);padding:9px 12px;font-size:12.5px;border-radius:3px}
+.infobox.warn{background:#FFF6DC;border-color:var(--destaque)}.infobox.bad{background:#FDECEC;border-color:var(--vermelho);color:#7a1a1a}.infobox.good{background:#E6F4EA;border-color:var(--verde)}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(30px);background:#323130;color:#fff;padding:12px 20px;border-radius:4px;font-size:13px;z-index:3000;opacity:0;transition:.25s;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.toast.err{background:var(--vermelho)}
+
+.afcard{background:#fff;border:1px solid var(--sp-border);border-radius:8px;padding:14px 16px;cursor:pointer;border-top:4px solid var(--azul-principal);transition:.15s}
+.afcard:hover{box-shadow:0 3px 12px rgba(8,59,122,.18);transform:translateY(-1px)}
+.afcard.reserv{border-top-color:#C7C6C4;background:#FAFAFA;cursor:default;opacity:.75}.afcard.reserv:hover{box-shadow:none;transform:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.ava{width:44px;height:44px;border-radius:50%;background:var(--azul-principal);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ava.big{width:64px;height:64px;font-size:22px}
+.ficha-head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ficha-head .score{margin-left:auto;text-align:center;background:var(--azul-escuro);color:#fff;border-radius:10px;padding:10px 20px}
+.ficha-head .score b{font-size:1.8rem;display:block}
+.achips{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.achip{font-size:10.5px;padding:2px 8px;border-radius:10px;font-weight:600}
+.achip.ok{background:#E3F3E8;color:var(--verde)}.achip.pend{background:#FCE9E9;color:var(--vermelho)}.achip.na{background:#EEE;color:#777}
+.acc{border:1px solid var(--sp-border);border-radius:6px;margin-bottom:8px;overflow:hidden;background:#fff}
+.acc>.h{padding:9px 14px;background:#F8F8F8;font-weight:600;font-size:13px;display:flex;gap:8px;align-items:center}
+.acc ul{margin:0;padding:8px 14px 10px 32px;font-size:12.8px;color:#333}
+.acc ul li{margin:2px 0}
+.ck{display:flex;gap:8px;align-items:flex-start;padding:7px 10px;border:1px solid var(--sp-border);border-radius:5px;margin-bottom:6px;cursor:pointer;font-size:13px}
+.ck:hover{background:#F3F9FD}.ck input{margin-top:3px}.ck small{display:block;color:var(--sp-sub);font-size:11.5px;margin-top:2px}
+.lockbox{text-align:center;padding:44px 20px;color:var(--sp-sub)}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}@media(max-width:1000px){.flow{grid-template-columns:1fr}}
+.flow>div{background:#EAF1FB;border-radius:8px;padding:12px 14px;font-size:12.5px}.flow b{display:block;color:var(--azul-escuro);margin-bottom:4px}
+.flow span.n{display:inline-block;background:var(--azul-principal);color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:12px;margin-right:6px}
+.ro{background:#FFF6DC;border-left:4px solid var(--destaque);padding:8px 12px;border-radius:3px;font-size:12.5px;margin-bottom:12px}
+footer{text-align:center;padding:24px;font-size:11.5px;color:var(--sp-sub);border-top:1px solid var(--sp-border);margin-top:20px}
+</style>
+</head>
+<body>
+<div id="tooltip"></div>
+<div class="toast" id="toast"></div>
+
+<div class="suitebar">
+  <div class="waffle"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="sp-logo">📁 SharePoint</div>
+  <div class="search">🔍 Pesquisar neste site</div>
+  <div class="icons"><span>🔔</span><span>⚙️</span><span class="avatar" title="Leonardo V. (conta de demonstração)">LV</span></div>
+</div>
+
+<div class="sitehead">
+  <div class="crumb">BarraFC &nbsp;›&nbsp; Portal do Atleta &nbsp;›&nbsp; Registro</div>
+  <div class="row">
+    <div class="icon">🧾</div>
+    <div>
+      <h1>Registro · Cadastro Central do Atleta</h1>
+      <div class="desc">Ficha base e profissional, objetivos e KPIs por posição, status por área e trilha de alterações</div>
+    </div>
+    <div class="members">Equipe Registro · Site privado<div class="btn" onclick="toast('Protótipo: o convite é feito no SharePoint real.')">+ Convidar pessoas</div></div>
+  </div>
+</div>
+
+<div class="sitenav" id="topnav" style="align-items:center;gap:10px;padding-top:6px;padding-bottom:6px"><span style="font-size:12px;color:var(--sp-sub)">Visualizando como:</span><select id="persona" onchange="setPersona(this.value)" style="padding:6px 10px;border:1px solid #8A8886;border-radius:3px;font-size:13px;font-family:inherit"></select><span id="personaNote" class="note" style="margin:0"></span></div>
+
+<div class="layout">
+  <div class="leftnav" id="leftnav"></div>
+  <div class="content" id="content"></div>
+</div>
+
+<footer>Simulação de Site de Equipe SharePoint — Registro · BarraFC · KLIT Integradora de T.I. · Dados demonstrativos (Brayan Bismark: dado do checkpoint; demais atletas, datas de nascimento e resultados simulados) · Gerado em 09/11/2026</footer>
+
+<!-- slide-over de detalhe -->
+<div class="overlay" id="ov" onclick="closeAll()"></div>
+<div class="panel" id="panel"><div class="panel-head"><h3 id="panelTitle">Item</h3><button class="xbtn" onclick="closeAll()">✕</button></div><div class="panel-body" id="panelBody"></div></div>
+
+<!-- modal genérico -->
+<div class="modal" id="modal">
+  <div class="modal-head"><h3 id="modalTitle"></h3><button class="xbtn" onclick="closeAll()">✕</button></div>
+  <div class="modal-body" id="mBody"></div>
+  <div class="modal-foot"><span id="mStatus" style="margin-right:auto;font-size:12px;color:var(--sp-sub)"></span><button class="btn-secondary" onclick="closeAll()">Cancelar</button><button class="btn-primary" id="mOk">Salvar</button></div>
+</div>
+<script>
+const KPI_BASE=[["Atacante", "Defensiva", "Evitar ou incomodar o adversário com a bola (1x1)", "Nº de pressões realizadas no 1x1"], ["Atacante", "Defensiva", "Evitar ou incomodar o adversário com a bola (1x1)", "Nº de pressões bem-sucedidas (roubo de bola ou passe forçado)"], ["Atacante", "Defensiva", "Evitar ou incomodar o adversário com a bola (1x1)", "Nº de recuperações diretas na zona ofensiva"], ["Atacante", "Defensiva", "Fechar linhas de passe do portador da bola, direcionando onde ela deve ser passada.", "Nº de recuperação pós perda"], ["Atacante", "Defensiva", "Fechar linhas de passe do portador da bola, direcionando onde ela deve ser passada.", "Nº de recuperações coletivas originadas da sua pressão"], ["Atacante", "Ofensiva", "Capacidade de controlar e desmarcar em espaços em profundidade", "Nº de desmarques de profundidade realizados"], ["Atacante", "Ofensiva", "Capacidade de controlar e desmarcar em espaços em profundidade", "Nº de bolas controladas em situações de profundidade"], ["Atacante", "Ofensiva", "Capacidade de controlar e desmarcar em espaços em profundidade", "Nº de finalizações criadas após controle em profundidade"], ["Atacante", "Ofensiva", "Sair da linha da profundidade para dar apoio ao jogo", "Nº de apoios oferecidos fora da linha de defesa"], ["Atacante", "Ofensiva", "Sair da linha da profundidade para dar apoio ao jogo", "Nº de ações de 1x1 que terminaram em finalização (chute, cabeceio.)"], ["Atacante", "Ofensiva", "Sair da linha da profundidade para dar apoio ao jogo", "Nº de jogadas progressivas iniciadas a partir do apoio"], ["Atacante", "Ofensiva", "Desmarcar na direção do gol, atacando as costas.", "Nº de corridas de ruptura em direção ao gol"], ["Atacante", "Ofensiva", "Desmarcar na direção do gol, atacando as costas.", "Nº de rupturas que resultaram em finalização"], ["Atacante", "Ofensiva", "Desmarcar na direção do gol, atacando as costas.", "Nº de gols marcados em desmarques de ruptura"], ["Atacante", "Ofensiva", "Gerar espaços para companheiros através de troca de ritmo", "Nº de jogadas em que sua movimentação gerou vantagem para companheiros"], ["Atacante", "Ofensiva", "Monitorar espaços, adversários e a bola para melhor se posicionar em situações de cruzamento.", "Nº de desmarques em área durante cruzamentos"], ["Atacante", "Ofensiva", "Monitorar espaços, adversários e a bola para melhor se posicionar em situações de cruzamento.", "Nº de finalizações em cruzamentos no alvo"], ["Atacante", "Ofensiva", "Monitorar espaços, adversários e a bola para melhor se posicionar em situações de cruzamento.", "Nº de gols marcados em jogadas de cruzamento"], ["Atacante", "Ofensiva", "Orientar o corpo entre defensores de forma a ter vantagem", "Nº de recepções entre zagueiros com domínio orientado"], ["Atacante", "Ofensiva", "Orientar o corpo entre defensores de forma a ter vantagem", "Nº de finalizações criadas a partir dessas recepções"], ["Atacante", "Ofensiva", "Orientar o corpo entre defensores de forma a ter vantagem", "Nº de faltas sofridas em zona perigosa"], ["Extremo", "Defensiva", "Equilibrar o time do lado oposto", "Nº de balanço defensivos corretos para o lado oposto"], ["Extremo", "Defensiva", "Equilibrar o time do lado oposto", "Nº de interceptações - Fechando lado oposto"], ["Extremo", "Defensiva", "Abordar o portador da bola (1x1)", "Nº de duelos defensivos 1x1 vencidos"], ["Extremo", "Defensiva", "Abordar o portador da bola (1x1)", "Nº de desarmes realizados no 1x1"], ["Extremo", "Defensiva", "Vigiar e dividir espaço com mais de um adversário", "Nº de passes adversários interceptado na sua zona"], ["Extremo", "Defensiva", "Proteger a área quando do lado oposto do cruzamento", "Nº de interceptações/rebates em cruzamentos no 2º trave"], ["Extremo", "Defensiva", "Proteger a área quando do lado oposto do cruzamento", "Nº de duelos aéreos defensivos vencidos dentro da área"], ["Extremo", "Ofensiva", "Oferecer amplitude", "Nº de recepções abertas em amplitude"], ["Extremo", "Ofensiva", "Oferecer amplitude", "Nº de jogadas progressivas iniciadas a partir da amplitude"], ["Extremo", "Ofensiva", "Orientar o corpo lateralmente para receber a bola", "Nº de jogadas criadas após recepção bem orientada"], ["Extremo", "Ofensiva", "Mudar de direção e atacar as costas", "Nº de corridas de ruptura em profundidade"], ["Extremo", "Ofensiva", "Mudar de direção e atacar as costas", "Nº de recepções em profundidade (bola recebida em vantagem)"], ["Extremo", "Ofensiva", "Mudar de direção e atacar as costas", "Nº de finalizações criadas a partir de rupturas"], ["Extremo", "Ofensiva", "Perceber as diferentes possibilidades de 1x1", "Nº de dribles tentados por jogo"], ["Extremo", "Ofensiva", "Perceber as diferentes possibilidades de 1x1", "% de dribles bem-sucedidos (ganhos)"], ["Extremo", "Ofensiva", "Perceber as diferentes possibilidades de 1x1", "Nº de vantagens criadas em 1x1 (faltas sofridas, passes após drible, finalizações.)"], ["Extremo", "Ofensiva", "Cruzamentos e finalizações no último terço do campo", "Nº de cruzamentos tentados por jogo"], ["Extremo", "Ofensiva", "Cruzamentos e finalizações no último terço do campo", "% de cruzamentos certos (encontrando companheiros)"], ["Extremo", "Ofensiva", "Cruzamentos e finalizações no último terço do campo", "Nº de finalizações no último terço (chutes + cabeceios)"], ["Extremo", "Ofensiva", "Cruzamentos e finalizações no último terço do campo", "Nº de entradas na área pelo lado oposto"], ["Lateral", "Defensiva", "Balançar junto com a linha defensiva", "Nº de ações corretas de alinhamento lateral por jogo"], ["Lateral", "Defensiva", "Balançar junto com a linha defensiva", "Nº de falhas de alinhamento (indicador negativo)"], ["Lateral", "Defensiva", "Balançar junto com a linha defensiva", "Nº de duelos defensivos em área (ganhos)"], ["Lateral", "Defensiva", "Reequilibrar a linha através de coberturas defensivas", "Nº de coberturas defensivas realizadas"], ["Lateral", "Defensiva", "Temporizar o portador da bola, não permitindo ser superado.", "Nº de duelos defensivos 1x1 vencidos"], ["Lateral", "Defensiva", "Temporizar o portador da bola, não permitindo ser superado.", "Nº de interceptações e desarmes bem-sucedidos"], ["Lateral", "Defensiva", "Temporizar o portador da bola, não permitindo ser superado.", "Nº de bolas longas adversárias controladas (sem ruptura)"], ["Lateral", "Defensiva", "Controlar a profundidade, mantendo o equilíbrio da linha.", "Nº de jogadas em que manteve cobertura equilibrada da linha"], ["Lateral", "Ofensiva", "Criar vantagem no 1x1 ou no domínio da bola", "Nº de dribles/1x1 ofensivos (ganhos)"], ["Lateral", "Ofensiva", "Criar vantagem no 1x1 ou no domínio da bola", "Nº de ações (passes/conduções) que resultaram em progressão ofensiva"], ["Lateral", "Ofensiva", "Atacar espaços no corredor lateral e movimentar em apoio constante", "Nº de ultrapassagem realizadas"], ["Lateral", "Ofensiva", "Atacar espaços no corredor lateral e movimentar em apoio constante", "Nº de apoios recebidos para dar continuidade à jogada"], ["Lateral", "Ofensiva", "Capacidade de assistências no último terço (cruzamentos)", "Nº de cruzamentos tentados por jogo"], ["Lateral", "Ofensiva", "Capacidade de assistências no último terço (cruzamentos)", "% de cruzamentos certos (nº total/certos)"], ["Lateral", "Ofensiva", "Capacidade de assistências no último terço (cruzamentos)", "Nº de chances claras criadas a partir de cruzamentos"], ["Meia", "Defensiva", "Defender a forma que atua (Zonal ou pressionando o adversário)", "Nº de pressões efetivas que resultaram em recuperação de bola"], ["Meia", "Defensiva", "Defender a forma que atua (Zonal ou pressionando o adversário)", "Nº de 1x1 com sucesso (desarme)"], ["Meia", "Defensiva", "Reduzir as opções de passe quando o portador da bola está sob pressão", "Nº de linhas de passe interceptada por jogo"], ["Meia", "Defensiva", "Reduzir as opções de passe quando o portador da bola está sob pressão", "Nº de recuperações de bola decorrentes da redução de opções"], ["Meia", "Ofensiva", "Oferecer linhas de passe entre a linha de defesa dos adversários", "Nº de passes recebidos entrelinhas sem perda de posse"], ["Meia", "Ofensiva", "Oferecer linhas de passe entre a linha de defesa dos adversários", "Nº de ações progressivas iniciadas após receber entrelinhas"], ["Meia", "Ofensiva", "Oferecer apoio de emergência quando o homem da bola estiver pressionado", "Nº de perdas de bola em passes entrelinhas (indicador negativo)"], ["Meia", "Ofensiva", "Atacar as costas, aproveitando os espaços gerados pelos atacantes.", "Nº de corridas de ruptura em profundidade por jogo"], ["Meia", "Ofensiva", "Atacar as costas, aproveitando os espaços gerados pelos atacantes.", "Nº de desmarques bem-sucedidos que resultaram em progressão/ofensiva"], ["Meia", "Ofensiva", "Atacar as costas, aproveitando os espaços gerados pelos atacantes.", "Nº de ações que terminaram criadas a partir dessas rupturas"], ["Meia", "Ofensiva", "Identificar espaços vantajosos na área e realizar desmarques para finalizar", "Nº de desmarques ofensivos dentro da área"], ["Meia", "Ofensiva", "Identificar espaços vantajosos na área e realizar desmarques para finalizar", "Nº de finalizações no gol"], ["Meia", "Ofensiva", "Identificar espaços vantajosos na área e realizar desmarques para finalizar", "Nº de gols marcados"], ["Meia", "Ofensiva", "Identificar espaços vantajosos na área e realizar desmarques para finalizar", "Nº de chances criadas a partir do passe do meia"], ["Volante", "Defensiva", "Fechar e controlar espaços interiores", "Nº de interceptações realizadas por jogo"], ["Volante", "Defensiva", "Identificar qual jogador se tem responsabilidade defensiva (1x1)", "Nº de faltas cometidas em situações de 1x1 (indicador negativo)"], ["Volante", "Defensiva", "Identificar qual jogador se tem responsabilidade defensiva (1x1)", "Nº de duelos defensivos 1x1 vencidos"], ["Volante", "Defensiva", "Proteger a linha defensiva das bolas aéreas", "Nº de disputas aéreas defensivas ganhas"], ["Volante", "Defensiva", "Proteger a linha defensiva das bolas aéreas", "Nº de segundas bolas recuperadas após disputa aérea"], ["Volante", "Defensiva", "Encaixar área caso ela esteja desequilibrada", "Nº de coberturas realizadas à frente da linha defensiva (área encaixada)"], ["Volante", "Ofensiva", "Criar linhas de passe por dentro", "Nº de apoios oferecidos em zona central"], ["Volante", "Ofensiva", "Criar linhas de passe por dentro", "Nº de recepções seguras sob pressão"], ["Volante", "Ofensiva", "Criar linhas de passe por dentro", "Nº de passes progressivos após recepção"], ["Volante", "Ofensiva", "Capacidade de gerir o ritmo do jogo (gestão do espaço)", "Nº de passes por jogo (indicador de controle de posse)"], ["Volante", "Ofensiva", "Capacidade de gerir o ritmo do jogo (gestão do espaço)", "Nº de passes certos no jogo"], ["Volante", "Ofensiva", "Capacidade de realizar passes entre linhas e assistências", "Nº de passes entrelinhas por jogo"], ["Volante", "Ofensiva", "Capacidade de realizar passes entre linhas e assistências", "Nº de passes para frente (passes certos/concluídos)"], ["Volante", "Ofensiva", "Capacidade de finalizar de média e longa distância", "Nº de finalizações de média/longa distância por jogo"], ["Volante", "Ofensiva", "Capacidade de finalizar de média e longa distância", "Nº de finalizações no alvo (acerto no gol)"], ["Volante", "Ofensiva", "Capacidade de finalizar de média e longa distância", "Nº de gols marcados de fora da área"], ["Zagueiro", "Defensiva", "Cobertura de um componente da linha", "Nº de coberturas realizadas por jogo"], ["Zagueiro", "Defensiva", "Cobertura de um componente da linha", "Nº de coberturas eficazes (total/rebatidas)"], ["Zagueiro", "Defensiva", "Controlar profundidade", "Duelos defensivos em bolas longas (ganhos)"], ["Zagueiro", "Defensiva", "Controlar profundidade", "Nº de corridas em profundidade controladas (ganhos)"], ["Zagueiro", "Defensiva", "Temporizar o portador da bola", "Nº de situações de temporização por jogo"], ["Zagueiro", "Defensiva", "Temporizar o portador da bola", "Nº de temporizações bem-sucedidas (adversário forçado a jogar para trás ou lateral)"], ["Zagueiro", "Defensiva", "Defender cruzamentos", "Nº de cruzamentos defendidos (interceptados ou afastados fora do centro de jogo) dentro da área"], ["Zagueiro", "Defensiva", "Defender cruzamentos", "Nº de gols tomados dentro da área a partir de cruzamentos"], ["Zagueiro", "Defensiva", "Defender cruzamentos", "Nº de cruzamentos e finalizações bloqueadas"], ["Zagueiro", "Defensiva", "Defesa de 1x1", "Nº de 1x1 efetivos (ganhos)"], ["Zagueiro", "Ofensiva", "Conduzir para atrair um oponente", "Nº de conduções que atraíram o marcador (após a condução, adversário saiu da linha.)"], ["Zagueiro", "Ofensiva", "Conduzir para atrair um oponente", "Perdas de posse durante conduções (nº de conduções com erro)"], ["Zagueiro", "Ofensiva", "Identificar o homem livre com passes curtos e longos", "Nº de passes que quebraram linhas por jogo"], ["Zagueiro", "Ofensiva", "Identificar o homem livre com passes curtos e longos", "Nº passes longos completos"], ["Zagueiro", "Ofensiva", "Oferecer linhas de passe para o homem da bola", "Nº de apoios oferecidos por jogo (situações em que se apresenta para receber)"], ["Zagueiro", "Ofensiva", "Oferecer linhas de passe para o homem da bola", "Nº de recepções seguras (sem perder a posse após receber)"], ["Zagueiro", "Ofensiva", "Atacar marcando", "Nº de bolas controladas pelos atacantes adversário em transições de posse de bola"], ["Zagueiro", "Ofensiva", "Atacar marcando", "Nº de bolas que o adversário conseguiu girar de frente em transição de posse de bola"]];
+const OPT={"tecnicas": ["Abordagem", "Antecipação", "Atacar as costas", "Bloqueio", "Cabeceio defensivo", "Cabeceio ofensivo", "Conduzir a bola", "Correr com a bola", "Cruzamento", "Defesa de 1x1", "Desarme", "Domínio orientado", "Drible", "Finalização", "Interceptação", "Movimento de pescoço", "Nenhuma tática", "Orientação corporal", "Passe", "Perseguição", "Proteção de bola", "Rebatida", "Retorno defensivo", "Sem bola - Atacar marcando", "Sem bola - Desmarque", "Sem bola - Linha de passe", "Troca de ritmo"], "freqSemana": ["1ª da semana", "2ª da semana", "3ª da semana", "4ª da semana"], "videoDesc": ["Vídeo de jogo", "Vídeo de PDI", "Vídeo de treino", "Vídeo de uma equipe de alto nível"], "justOcorr": ["Não comparecimento injustificado", "Não comparecimento justificado (Departamento médico)", "Não comparecimento justificado (Jogo)", "Não comparecimento justificado (Viagem)"], "proxPasso": ["Comunicação comissão técnica", "Comunicação coordenação", "Comunicação performance"], "freqTreino": ["1x NA SEMANA", "2X NA SEMANA", "3X NA SEMANA", "4X NA SEMANA"], "fisObj": ["Aumentar a agilidade", "Aumentar a força (membros inferiores)", "Aumentar a força (membros superiores)", "Aumentar aceleração 30M", "Aumentar arranque 10M", "Diminuir percentual de gordura", "Melhorar coordenação/técnica de corrida"], "fisInterv": ["Treino aeróbico", "Treino coordenação/técnica de corrida", "Treino de aceleração 30M", "Treino de agilidade", "Treino de arranque 10M", "Treino de força (membros inferiores)", "Treino de força (membros superiores)"], "fisPlano": ["Feedback comissão técnica", "Feedback performance", "Seguir em acompanhamento"], "nutObj": ["Acelerar recuperação pós-treino/jogo", "Aumentar massa magra (hipertrofia)", "Corrigir deficiências de micronutrientes", "Desenvolver autonomia alimentar", "Ganhar massa corporal total (casos específicos)", "Manter composição corporal ideal", "Melhorar saúde intestinal", "Otimizar disponibilidade energética e performance", "Recomposição corporal (uso criterioso)", "Reduzir % de gordura (manter/ganhar massa magra)", "Suporte nutricional RTP (lesão)"], "nutPlano": ["Alta proteína para síntese tecidual + suplementos", "Aumento de fibras e hidratação", "Déficit calórico moderado", "Déficit leve com proteína elevada e periodização", "Dieta isocalórica com proteína moderada-alta", "Educação nutricional, sistema P/M/G", "Nutrição pós-treino, proteína + carboidrato", "Periodização de carboidratos por microciclo", "Superávit calórico controlado + suplementos", "Superávit calórico elevado + alta proteína", "Suplementação guiada por exames"], "psiObj": ["Contribuir com a adesão nutricional", "Contribuir com adesão ao tratamento médico", "Contribuir para gestão de estresse", "Controlar ansiedade", "Desenvolver gestão de expectativas", "Desenvolver habilidades sociais", "Desenvolver senso de responsabilidade", "Manter conduta comportamental", "Melhorar cognição"], "psiPlano": ["Feedback comissão técnica", "Feedback multidisciplinar", "Observação direta em treinos e jogos", "Seguir em acompanhamento"], "ssObj": ["Desenvolver conduta escolar", "Diagnosticar realidade social", "Identificar rede de apoio", "Intervir na rede de apoio (Amigos, família e comunidade.)", "Manter conduta comportamental", "Manter desempenho escolar", "Não se aplica"], "ssPlano": ["Feedback comissão técnica", "Feedback multidisciplinar", "Não se aplica", "Observação direta em treinos e jogos", "Seguir em acompanhamento", "Visita na escola"], "freqAreas": ["1x a cada 2 semanas", "1x por semana", "2x por semana", "3x por semana", "4x por semana", "Diária", "Não se aplica", "Ocasional", "Pontual"]};
+/* ================= BASE ================= */
+const POSICOES=["Atacante","Extremo","Lateral","Meia","Volante","Zagueiro"];
+const HOJE="09/11/2026";
+const USUARIO="Leonardo V.";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fPct=v=>v==null||isNaN(v)?"—":(v*100).toFixed(1).replace(".",",")+"%";
+const fN=v=>v==null?"—":(+v).toLocaleString("pt-BR");
+const f2=v=>Number(v).toFixed(2).replace(".",",");
+const dKey=d=>{const[a,m,y]=d.split("/").map(Number);return y*10000+m*100+a};
+const nowStamp=()=>HOJE+" "+new Date().toTimeString().slice(0,5);
+function toast(msg,err){const t=$("#toast");t.textContent=msg;t.className="toast on"+(err?" err":"");clearTimeout(toast._t);toast._t=setTimeout(()=>t.className="toast",3400)}
+function closeAll(){$("#ov").classList.remove("on");$("#panel").classList.remove("on");$("#modal").classList.remove("on")}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAll()});
+const faseOf=(pos,comp)=>{const r=KPI_BASE.find(k=>k[0]===pos&&k[2]===comp);return r?r[1]:""};
+const kpisOf=(pos,comp)=>KPI_BASE.filter(k=>k[0]===pos&&k[2]===comp).map(k=>k[3]);
+const idade=n=>{const[d,m,y]=n.split("/").map(Number),[hd,hm,hy]=HOJE.split("/").map(Number);let a=hy-y;if(hm<m||(hm===m&&hd<d))a--;return a};
+const iniciais=n=>n.split(" ").filter(x=>x.length>2).slice(0,2).map(x=>x[0]).join("").toUpperCase();
+
+/* ================= PERSONAS & VISIBILIDADE (Matriz de Visibilidade) ================= */
+const PERSONAS=[["ctrl","Controladoria"],["ct","Comissão Técnica"],["fis","Físico / Performance"],["nut","Nutrição"],["psi","Psicologia"],["ss","Serviço Social"]];
+const AREAS=[["reg","Registro"],["tt","Tático/Técnico"],["fis","Físico"],["nut","Nutrição"],["psi","Psicologia"],["ss","Serviço Social"]];
+const AREA_NAME=Object.fromEntries(AREAS);
+// T = total · I = somente indicador · N = sem acesso
+const ACCESS={ctrl:{reg:"T",tt:"T",fis:"T",nut:"I",psi:"I",ss:"I"},ct:{reg:"T",tt:"T",fis:"I",nut:"N",psi:"N",ss:"N"},fis:{reg:"T",tt:"I",fis:"T",nut:"N",psi:"N",ss:"N"},nut:{reg:"T",tt:"I",fis:"I",nut:"T",psi:"N",ss:"N"},psi:{reg:"T",tt:"I",fis:"I",nut:"N",psi:"T",ss:"N"},ss:{reg:"T",tt:"I",fis:"I",nut:"N",psi:"N",ss:"T"}};
+let PERSONA="ctrl";
+const acc=a=>ACCESS[PERSONA][a];
+const canEdit=a=>a==="reg"?PERSONA==="ctrl":PERSONA===(a==="tt"?"ct":a);           // cada área edita o seu espaço
+const pName=()=>PERSONAS.find(p=>p[0]===PERSONA)[1];
+const quem=()=>`${USUARIO} (${pName()})`;
+function setPersona(p){PERSONA=p;renderShell();renderPage()}
+
+/* ================= DADOS ================= */
+const HIST={"BFC-SUB15-0007":[8.18,8.04,8.24,8.00,7.76],"BFC-SUB17-0012":[7.46,7.61,7.44,7.24,7.29],"BFC-SUB20-0004":[6.79,6.85,6.95,6.84,6.64],"BFC-SUB15-0015":[8.48,8.55,8.66,8.90,8.99]};
+const CKP=["01/05","15/05","29/05","12/06","26/06"];
+const TT_SUM={"BFC-SUB15-0007":{n:7,rep:90,ac:37},"BFC-SUB17-0012":{n:5,rep:85,ac:50},"BFC-SUB20-0004":{n:5,rep:95,ac:49},"BFC-SUB15-0015":{n:5,rep:95,ac:58}};
+const mk=(id,nome,nasc,cat,pos,freq,real,obj,fis,nut,psi,ss,jogos)=>({id,nome,nasc,cat,ficha:cat==="Profissional"?"Profissional":"Base",posicao:pos,freq,playlist:"",real,obj,areas:{fis,nut,psi,ss},jogos,resp:"Controladoria (Registro)",criado:"05/05/2026"});
+let ATLETAS=[
+ mk("BFC-SUB15-0007","Brayan Bismark","15/03/2012","Sub-15","Meia","3X NA SEMANA",true,["Oferecer linhas de passe entre a linha de defesa dos adversários","Defender a forma que atua (Zonal ou pressionando o adversário)","Reduzir as opções de passe quando o portador da bola está sob pressão"],[],[],[],[],false),
+ mk("BFC-SUB17-0012","Kaique Andrade","22/08/2009","Sub-17","Zagueiro","3X NA SEMANA",false,["Temporizar o portador da bola","Defender cruzamentos","Controlar profundidade","Identificar o homem livre com passes curtos e longos"],["Aumentar a força (membros inferiores)","Aumentar arranque 10M"],["Manter composição corporal ideal"],["Manter conduta comportamental","Desenvolver gestão de expectativas"],["Manter desempenho escolar"],true),
+ mk("BFC-SUB20-0004","Rafael Nunes","02/02/2006","Sub-20","Lateral","4X NA SEMANA",false,["Atacar espaços no corredor lateral e movimentar em apoio constante","Temporizar o portador da bola, não permitindo ser superado.","Criar vantagem no 1x1 ou no domínio da bola"],["Aumentar aceleração 30M","Aumentar a agilidade"],["Aumentar massa magra (hipertrofia)"],["Controlar ansiedade"],["Identificar rede de apoio"],true),
+ mk("BFC-SUB15-0015","Enzo Ferreira","10/06/2011","Sub-15","Atacante","2X NA SEMANA",false,["Sair da linha da profundidade para dar apoio ao jogo","Desmarcar na direção do gol, atacando as costas.","Evitar ou incomodar o adversário com a bola (1x1)"],["Aumentar a força (membros inferiores)"],["Reduzir % de gordura (manter/ganhar massa magra)"],["Contribuir para gestão de estresse"],["Desenvolver conduta escolar"],true),
+];
+const atl=id=>ATLETAS.find(a=>a.id===id);
+let LOG=[];
+ATLETAS.forEach(a=>{LOG.push({q:a.criado+" 09:00",u:"Controladoria (Registro)",a:a.id,area:"Registro",campo:"Ficha",de:"",para:"Criada ("+a.ficha+")"});LOG.push({q:a.criado+" 09:20",u:"Comissão Técnica",a:a.id,area:"Tático/Técnico",campo:"Objetivos táticos",de:"0",para:a.obj.length+" definidos"});
+ [["fis","Físico"],["nut","Nutrição"],["psi","Psicologia"],["ss","Serviço Social"]].forEach(([k,n])=>{if(a.areas[k].length)LOG.push({q:a.criado+" 10:00",u:n+" (área)",a:a.id,area:n,campo:"Objetivos",de:"0",para:a.areas[k].length+" definidos"})})});
+
+/* status por área */
+function status(a,k){
+  if(k==="ss"&&a.ficha==="Profissional")return"na";
+  if(k==="tt")return a.obj.length?"ok":"pend";
+  if(k==="jogos")return a.jogos?"ok":"pend";
+  return a.areas[k].length?"ok":"pend";
+}
+const STAT_COLS=[["tt","Tático Técnico"],["jogos","KPIs de Jogo"],["fis","Físico"],["nut","Nutrição"],["ss","Serviço Social"],["psi","Psicologia"]];
+const stBadge=s=>s==="ok"?'<span class="badge b-verde">Em dia</span>':s==="na"?'<span class="badge b-cinza">Não se aplica</span>':'<span class="badge b-vermelho">Pendente</span>';
+const stChip=(s,l)=>`<span class="achip ${s}">${l}</span>`;
+const pendCount=a=>STAT_COLS.filter(c=>status(a,c[0])==="pend").length;
+
+/* ================= NAVEGAÇÃO ================= */
+const LEFT=[["Registro",[["atletas","Atletas","#0078D4"],["novo","Novo atleta","#0078D4"],["catalogo","Objetivos e KPIs por posição","#0B4FA2"],["status","Status por área × atleta","#0B4FA2"],["auditoria","Trilha de alterações","#0B4FA2"],["governanca","Estrutura e governança","#8A8886"]]]];
+let PAGE="atletas",SEL=null,FTAB="resumo";
+function renderShell(){
+  $("#persona").innerHTML=PERSONAS.map(p=>`<option value="${p[0]}" ${p[0]===PERSONA?"selected":""}>${p[1]}</option>`).join("");
+  $("#personaNote").textContent=PERSONA==="ctrl"?"Visão total (conteúdo clínico apenas como indicador agregado — LGPD). Edita o Registro.":`Edita apenas o espaço de ${pName()}; demais áreas conforme a Matriz de Visibilidade.`;
+  $("#leftnav").innerHTML=LEFT.map(([s,it])=>`<div class="section-lbl">${s}</div>`+it.map(i=>`<a class="${PAGE===i[0]||(PAGE==="ficha"&&i[0]==="atletas")?"active":""}" onclick="go('${i[0]}')"><span class="dot" style="background:${i[2]}"></span>${i[1]}</a>`).join("")).join("")
+   +`<div class="section-lbl" style="margin-top:14px">Outras equipes</div><a href="TaticoTecnico_SharePoint_Simulado_v3.html" target="_blank"><span class="dot" style="background:#C7C6C4"></span>Tático Técnico ↗</a><a onclick="toast('Protótipo: site Físico do Portal do Atleta.')"><span class="dot" style="background:#C7C6C4"></span>Físico</a><a onclick="toast('Protótipo: site Nutrição do Portal do Atleta.')"><span class="dot" style="background:#C7C6C4"></span>Nutrição</a><a onclick="toast('Protótipo: site Psicologia do Portal do Atleta.')"><span class="dot" style="background:#C7C6C4"></span>Psicologia</a><a onclick="toast('Protótipo: site Serviço Social do Portal do Atleta.')"><span class="dot" style="background:#C7C6C4"></span>Serviço Social</a>`;
+}
+function go(p,id){PAGE=p;if(id){SEL=id;FTAB="resumo"}closeAll();renderShell();renderPage();window.scrollTo(0,0)}
+const PAGES={};
+function renderPage(){$("#content").innerHTML="";PAGES[PAGE]();if(PAGE==="ficha")drawFicha()}
+
+/* ================= ATLETAS ================= */
+const AF={cat:"",pos:"",ficha:"",pend:""};
+PAGES.atletas=function(){
+  const n=ATLETAS.length,base=ATLETAS.filter(a=>a.ficha==="Base").length,obj=ATLETAS.reduce((s,a)=>s+a.obj.length,0),pend=ATLETAS.reduce((s,a)=>s+pendCount(a),0);
+  const list=ATLETAS.filter(a=>(!AF.cat||a.cat===AF.cat)&&(!AF.pos||a.posicao===AF.pos)&&(!AF.ficha||a.ficha===AF.ficha)&&(!AF.pend||(AF.pend==="s"?pendCount(a)>0:pendCount(a)===0)));
+  const cats=["Sub-15","Sub-17","Sub-20","Profissional"];
+  $("#content").innerHTML=`
+  <div class="kpi-grid"><div class="kcard"><div class="lbl">Atletas no cadastro central</div><div class="val">${n}</div><div class="sub">5 fichas viraram 1 cadastro central</div></div>
+   <div class="kcard"><div class="lbl">Ficha Base · Profissional</div><div class="val">${base} · ${n-base}</div><div class="sub">Sub-14 reservada (sem atletas)</div></div>
+   <div class="kcard"><div class="lbl">Objetivos táticos definidos</div><div class="val">${obj}</div><div class="sub">alimentam as opções dos formulários</div></div>
+   <div class="kcard ${pend?"warn":"ok"}"><div class="lbl">Pendências por área</div><div class="val">${pend}</div><div class="sub">áreas sem objetivos/lançamentos no ciclo</div></div></div>
+  <div class="filters"><label>Categoria</label><select onchange="AF.cat=this.value;PAGES.atletas()"><option value="">Todas</option>${cats.map(c=>`<option ${AF.cat===c?"selected":""}>${c}</option>`).join("")}</select>
+   <label>Posição</label><select onchange="AF.pos=this.value;PAGES.atletas()"><option value="">Todas</option>${POSICOES.map(c=>`<option ${AF.pos===c?"selected":""}>${c}</option>`).join("")}</select>
+   <label>Ficha</label><select onchange="AF.ficha=this.value;PAGES.atletas()"><option value="">Todas</option><option ${AF.ficha==="Base"?"selected":""}>Base</option><option ${AF.ficha==="Profissional"?"selected":""}>Profissional</option></select>
+   <label>Pendências</label><select onchange="AF.pend=this.value;PAGES.atletas()"><option value="">Todas</option><option value="s" ${AF.pend==="s"?"selected":""}>Com pendência</option><option value="n" ${AF.pend==="n"?"selected":""}>Em dia</option></select>
+   <span style="margin-left:auto"><button class="btn-primary" ${canEdit("reg")?"":"disabled title='Somente o Registro/Controladoria cadastra atletas'"} onclick="go('novo')">+ Novo atleta</button></span></div>
+  <div class="cards">${list.map(a=>{const sc=HIST[a.id]?HIST[a.id][4]:null;return `<div class="afcard" onclick="go('ficha','${a.id}')"><div style="display:flex;gap:12px;align-items:center"><div class="ava">${iniciais(a.nome)}</div><div><b>${esc(a.nome)}</b>${a.real?' <span class="pill pill-gray">dado real</span>':""}<div style="font-size:11.5px;color:var(--sp-sub)">${a.id}</div></div>${sc?`<div style="margin-left:auto;text-align:right"><div style="font-size:10px;color:var(--sp-sub)">SCORE</div><b style="font-size:1.2rem;color:var(--azul-escuro)">${f2(sc)}</b></div>`:""}</div>
+   <div style="margin-top:10px;font-size:12.8px">${a.cat} · <b>${a.posicao}</b> · Ficha ${a.ficha} · ${a.freq}</div>
+   <div class="achips">${STAT_COLS.map(c=>stChip(status(a,c[0]),c[1])).join("")}</div></div>`}).join("")}
+   <div class="afcard reserv"><div style="display:flex;gap:12px;align-items:center"><div class="ava" style="background:#C7C6C4">S14</div><div><b>Sub-14 · reservada</b><div style="font-size:11.5px;color:var(--sp-sub)">entra quando o clube voltar a participar</div></div></div></div></div>
+  ${list.length?"":`<div class="empty">Nenhum atleta para o filtro.</div>`}`;
+};
+
+/* ================= FICHA ================= */
+function roBar(area){return canEdit(area)?"":`<div class="ro">Somente leitura para <b>${pName()}</b> — ${area==="reg"?"o cadastro é editado pelo Registro/Controladoria":"o espaço de "+AREA_NAME[area]+" é editado pela própria área"}.</div>`}
+const FTABS=[["resumo","Resumo","reg"],["tt","Tático/Técnico","tt"],["fis","Físico","fis"],["nut","Nutrição","nut"],["psi","Psicologia","psi"],["ss","Serviço Social","ss"],["docs","Documentos","reg"],["aud","Trilha de alterações","reg"]];
+PAGES.ficha=function(){
+  const a=atl(SEL);if(!a){go("atletas");return}
+  const sc=HIST[a.id];
+  $("#content").innerHTML=`
+  <div style="margin-bottom:10px"><a class="folder-link" onclick="go('atletas')">← Atletas</a></div>
+  <div class="webpart"><div class="wp-body"><div class="ficha-head"><div class="ava big">${iniciais(a.nome)}</div><div><h2 style="margin:0">${esc(a.nome)} ${a.real?'<span class="pill pill-gray">dado real</span>':""}</h2><div style="color:var(--sp-sub);font-size:13px;margin-top:3px">${a.id} · ${a.cat} · <b>Ficha ${a.ficha}</b> · ${a.posicao} · ${a.freq}</div><div class="achips">${STAT_COLS.map(c=>stChip(status(a,c[0]),c[1])).join("")}</div></div>${sc?`<div class="score"><small>SCORE ATUAL</small><b>${f2(sc[4])}</b><small>${CKP[4]} · ${sc[4]>sc[0]?"▲":"▼"} vs ${CKP[0]}</small></div>`:""}</div></div></div>
+  <div class="tabs">${FTABS.filter(t=>!(t[0]==="ss"&&a.ficha==="Profissional")).map(t=>`<button class="tab-btn ${FTAB===t[0]?"active":""}" onclick="FTAB='${t[0]}';PAGES.ficha();drawFicha()">${t[1]}${t[2]!=="reg"&&acc(t[2])==="N"?" 🔒":t[2]!=="reg"&&acc(t[2])==="I"?" ◐":""}</button>`).join("")}</div>
+  <div id="fbody">${fichaBody(a)}</div>`;
+};
+function fichaBody(a){
+  if(FTAB==="resumo")return resumo(a);
+  if(FTAB==="docs")return docs(a);
+  if(FTAB==="aud")return audTable(LOG.filter(l=>l.a===a.id),false);
+  return areaTab(a,FTAB);
+}
+function resumo(a){
+  const sc=HIST[a.id];
+  return `${roBar("reg")}<div class="grid2"><div>
+   <div class="card"><h3>Dados do atleta</h3><div class="sub">Preenchido uma vez, no início do ciclo · herdado pelos formulários (somente leitura nas demais equipes)</div>
+    <dl class="dl"><dt>AtletaID</dt><dd>${a.id}</dd><dt>Nome</dt><dd>${esc(a.nome)}</dd><dt>Data de nascimento</dt><dd>${a.nasc} · ${idade(a.nasc)} anos <span class="pill pill-gray">ilustrativo</span></dd><dt>Categoria</dt><dd>${a.cat}</dd><dt>Tipo de ficha</dt><dd>${a.ficha} ${a.ficha==="Base"?"· 5 áreas e KPIs por posição":"· sem Serviço Social e sem KPIs de base"}</dd><dt>Posição</dt><dd>${a.posicao}</dd><dt>Frequência de treino</dt><dd>${a.freq}</dd><dt>Playlist de vídeos</dt><dd>${a.playlist?`<a href="${esc(a.playlist)}" target="_blank">${esc(a.playlist)}</a>`:'<span style="color:var(--sp-sub)">não informada (pode ficar para o fim)</span>'}</dd><dt>Cadastrado por</dt><dd>${a.resp} · ${a.criado}</dd></dl>
+    <button class="btn-secondary" ${canEdit("reg")?"":"disabled"} onclick="editFicha('${a.id}')">✏️ Editar ficha</button> <a class="btn-secondary" style="text-decoration:none;display:inline-block" href="TaticoTecnico_SharePoint_Simulado_v3.html" target="_blank">Abrir no Tático Técnico ↗</a></div>
+   ${TT_SUM[a.id]?`<div class="card"><h3>Tático Técnico — resumo</h3><div class="sub">Indicador agregado da lista da Comissão Técnica</div><div style="display:flex;gap:30px;flex-wrap:wrap"><div><div class="sub">Registros</div><b style="font-size:1.4rem;color:var(--azul-escuro)">${TT_SUM[a.id].n}</b></div><div><div class="sub">Repetições</div><b style="font-size:1.4rem;color:var(--azul-escuro)">${TT_SUM[a.id].rep}</b></div><div><div class="sub">% aproveitamento</div><b style="font-size:1.4rem;color:var(--azul-escuro)">${fPct(TT_SUM[a.id].ac/TT_SUM[a.id].rep)}</b></div></div></div>`:""}</div>
+  <div><div class="card"><h3>Evolução do score</h3><div class="sub">5 checkpoints do ciclo</div>${sc?`<canvas id="cScore" style="height:230px"></canvas>`:`<div class="empty">Sem checkpoints ainda — o score aparece após a primeira avaliação.</div>`}</div>
+   ${sc?`<div class="card"><h3>Checkpoints</h3><table class="t2"><thead><tr><th>#</th><th>Data</th><th>Score</th><th>Variação</th></tr></thead><tbody>${sc.map((v,i)=>`<tr><td>${i+1}</td><td>${CKP[i]}</td><td><b>${f2(v)}</b></td><td>${i?`<span class="badge ${v>=sc[i-1]?"b-verde":"b-vermelho"}">${v>=sc[i-1]?"+":""}${f2(v-sc[i-1])}</span>`:"—"}</td></tr>`).join("")}</tbody></table></div>`:""}</div></div>`;
+}
+function drawFicha(){
+  if(PAGE!=="ficha"||FTAB!=="resumo")return;const a=atl(SEL),c=$("#cScore");if(!c||!HIST[a.id])return;
+  const d=HIST[a.id];const{ctx,W,H}=setupCanvas(c,230);const PAD={top:18,right:16,bottom:30,left:38},cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  const mn=Math.floor(Math.min(...d)-0.5),mx=Math.ceil(Math.max(...d)+0.5);grid(ctx,PAD,cW,cH,mx,mn,false);const st=cW/(d.length-1),tips=[];
+  ctx.strokeStyle="#0B4FA2";ctx.lineWidth=2.6;ctx.beginPath();d.forEach((v,i)=>{const x=PAD.left+i*st,y=PAD.top+cH-(v-mn)/(mx-mn)*cH;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+  d.forEach((v,i)=>{const x=PAD.left+i*st,y=PAD.top+cH-(v-mn)/(mx-mn)*cH;ctx.beginPath();ctx.arc(x,y,4.5,0,7);ctx.fillStyle=i===d.length-1?"#F2C100":"#0B4FA2";ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();tips.push({x:x-8,y:y-8,w:16,h:16,l:CKP[i],v});ctx.fillStyle="#163028";ctx.font="bold 10px Segoe UI";ctx.textAlign="center";ctx.fillText(f2(v),x,y-9);ctx.font="10px Segoe UI";ctx.fillText(CKP[i],x,H-PAD.bottom+16)});
+  hookTips(c,tips,t=>[`<b>Checkpoint ${t.l}</b>`,`Score: <b>${f2(t.v)}</b>`]);
+}
+window.addEventListener("resize",()=>{clearTimeout(window._r);window._r=setTimeout(drawFicha,150)});
+
+/* ---------- abas por área ---------- */
+const AREA_OPT={fis:"fisObj",nut:"nutObj",psi:"psiObj",ss:"ssObj"};
+const AREA_INFO={tt:["Tático/Técnico","Comportamentos e KPIs da posição definidos para o ciclo — alimentam as opções do formulário da Comissão Técnica."],fis:["Físico","Testes e metas físicas do ciclo."],nut:["Nutrição","Composição corporal e suplementação. Dado sensível (LGPD)."],psi:["Psicologia","Conduta e gestão de expectativas. Dado muito sensível (LGPD)."],ss:["Serviço Social","Somente ficha base. Dado sensível (LGPD)."]};
+function areaTab(a,k){
+  const lvl=acc(k),name=AREA_INFO[k][0];
+  if(k==="ss"&&a.ficha==="Profissional")return `<div class="lockbox">Serviço Social não se aplica à ficha profissional.</div>`;
+  if(lvl==="N")return `<div class="lockbox"><div style="font-size:40px">🔒</div><h3 style="color:var(--sp-text)">${name} — sem acesso</h3><p style="max-width:520px;margin:6px auto 14px">${AREA_INFO[k][1]} O perfil <b>${pName()}</b> não visualiza esta área (Matriz de Visibilidade).</p><button class="btn-secondary" onclick="toast('Solicitação de acesso enviada (simulado).')">Solicitar acesso</button></div>`;
+  const objs=k==="tt"?a.obj:a.areas[k],st=status(a,k);
+  if(lvl==="I")return `<div class="ro">Somente indicador para <b>${pName()}</b> — o conteúdo detalhado fica restrito à própria área (LGPD).</div><div class="kpi-grid"><div class="kcard ${st==="ok"?"ok":"alert"}"><div class="lbl">Status no ciclo</div><div class="val" style="font-size:1.2rem">${st==="ok"?"Em dia":"Pendente"}</div><div class="sub">${name}</div></div><div class="kcard"><div class="lbl">Objetivos definidos</div><div class="val">${objs.length}</div><div class="sub">quantidade apenas — sem descrição</div></div><div class="kcard"><div class="lbl">Última atualização</div><div class="val" style="font-size:1.2rem">${(LOG.filter(l=>l.a===a.id&&l.area===name).slice(-1)[0]||{q:"—"}).q.slice(0,10)}</div><div class="sub">data do último lançamento</div></div></div>`;
+  let body;
+  if(k==="tt")body=objs.length?[["Ofensiva"],["Defensiva"]].map(([f])=>{const cs=objs.filter(c=>faseOf(a.posicao,c)===f);return cs.length?`<div class="acc"><div class="h"><span class="pill ${f==="Ofensiva"?"pill-of":"pill-def"}">${f}</span> ${cs.length} objetivo(s)</div>${cs.map(c=>`<div style="padding:8px 14px;border-top:1px solid #F0F0F0"><b style="font-size:13px">${esc(c)}</b><ul style="padding-top:2px">${kpisOf(a.posicao,c).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")}</div>`:""}).join(""):`<div class="empty">Nenhum objetivo definido. A Comissão Técnica só consegue lançar intervenções de objetivos definidos aqui.</div>`;
+  else body=objs.length?`<table class="t2"><thead><tr><th>Objetivo</th><th>Frequência</th>${k==="fis"?"<th>Resultado inicial</th><th>Resultado final</th>":k==="nut"?"<th>Resultado inicial</th>":"<th>Adesão</th>"}<th>Plano de ação</th></tr></thead><tbody>${objs.map((o,i)=>`<tr><td>${esc(o)}</td><td>${OPT.freqAreas[(i+2)%OPT.freqAreas.length-0]||"1x por semana"}</td>${k==="fis"?`<td>${["43,2 cm","1,98 s","4,44 s","—"][i%4]}</td><td>—</td>`:k==="nut"?`<td>${["82,9 kg · 10,5%","74,1 kg MM"][i%2]}</td>`:`<td>Integral</td>`}<td>${esc((OPT[k+"Plano"]||OPT.psiPlano)[i%(OPT[k+"Plano"]||OPT.psiPlano).length])}</td></tr>`).join("")}</tbody></table><div class="note">Frequências, resultados e planos ilustrativos (simulação a partir das listas da Base de Dados do checkpoint).</div>`:`<div class="empty">Nenhum objetivo definido — área <b>pendente</b> no radar da Controladoria.</div>`;
+  return `${roBar(k)}<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><h3>${name} · objetivos do ciclo</h3><div class="sub">${AREA_INFO[k][1]}</div></div><button class="btn-primary" ${canEdit(k)?"":"disabled"} onclick="editObj('${a.id}','${k}')">Definir objetivos</button></div>${body}</div>`;
+}
+function docs(a){return `<div class="card"><h3>Biblioteca de documentos do atleta</h3><div class="sub">Documentos por ciclo, com acesso restrito por área</div><table class="t2"><thead><tr><th>Nome</th><th>Ciclo</th><th>Acesso</th></tr></thead><tbody><tr><td>📗 Checkpoint PDI Ciclo 02.2026 - ${esc(a.nome)}.xlsm</td><td>02/2026</td><td><span class="pill pill-video">Interno</span></td></tr><tr><td>🔗 Playlist de vídeos - ${esc(a.nome)}.url</td><td>02/2026</td><td><span class="pill pill-video">Interno</span></td></tr><tr><td>📕 Conclusão PDI ciclo 02.2026 - ${esc(a.nome)}.pdf</td><td>02/2026</td><td><span class="pill pill-warn">Restrito</span></td></tr></tbody></table></div>`}
+function audTable(rows,showAt){const r=rows.slice().sort((x,y)=>dKey(y.q.slice(0,10))-dKey(x.q.slice(0,10))||(y.q>x.q?1:-1));return `<div class="card"><h3>Trilha de alterações</h3><div class="sub">Usuário, campo, data e hora — registrada automaticamente</div><div style="overflow-x:auto"><table class="t2"><thead><tr><th>Quando</th><th>Usuário</th>${showAt?"<th>Atleta</th>":""}<th>Área</th><th>Campo</th><th>Alteração</th></tr></thead><tbody>${r.map(l=>`<tr><td>${esc(l.q)}</td><td>${esc(l.u)}</td>${showAt?`<td>${esc(atl(l.a)?.nome||l.a)}</td>`:""}<td>${esc(l.area)}</td><td>${esc(l.campo)}</td><td>${l.de?esc(l.de)+" → ":""}<b>${esc(l.para)}</b></td></tr>`).join("")||`<tr><td colspan="6" class="empty">Sem alterações.</td></tr>`}</tbody></table></div></div>`}
+
+/* ---------- modais ---------- */
+function openModal(title,html,onOk,okLabel){$("#modalTitle").textContent=title;$("#mBody").innerHTML=html;$("#mOk").textContent=okLabel||"Salvar";$("#mOk").onclick=onOk;$("#mStatus").textContent="";$("#ov").classList.add("on");$("#modal").classList.add("on")}
+function editObj(id,k){
+  const a=atl(id);let items;
+  if(k==="tt"){const cs=[...new Set(KPI_BASE.filter(x=>x[0]===a.posicao).map(x=>x[2]))];items=cs.map(c=>({v:c,l:c,s:`${faseOf(a.posicao,c)} · ${kpisOf(a.posicao,c).length} KPI(s)`}));}
+  else items=OPT[AREA_OPT[k]].map(o=>({v:o,l:o,s:""}));
+  const cur=new Set(k==="tt"?a.obj:a.areas[k]);
+  const upd=()=>{$("#mStatus").textContent=$$("#mBody input:checked").length+" selecionado(s)"};
+  openModal(`Definir objetivos · ${AREA_INFO[k][0]} · ${a.nome}`,`<div class="infobox" style="margin-bottom:12px">${k==="tt"?`Comportamentos previstos para <b>${a.posicao}</b> na Base de Dados KPIs (${items.length} comportamentos · ${KPI_BASE.filter(x=>x[0]===a.posicao).length} KPIs). Apenas os marcados aparecem no formulário da Comissão Técnica.`:"Objetivos da Base de Dados do checkpoint."}</div>`+(k==="tt"?["Ofensiva","Defensiva"]:[""]).map(f=>`${f?`<div class="fsec" style="margin:10px 0 6px">${f}</div>`:""}`+items.filter(i=>!f||i.s.startsWith(f)).map(i=>`<label class="ck"><input type="checkbox" value="${esc(i.v)}" ${cur.has(i.v)?"checked":""} onchange="document.getElementById('mStatus').textContent=document.querySelectorAll('#mBody input:checked').length+' selecionado(s)'"><span>${esc(i.l)}${i.s?`<small>${i.s}</small>`:""}</span></label>`).join("")).join(""),()=>{
+    const novo=$$("#mBody input:checked").map(x=>x.value);const add=novo.filter(x=>!cur.has(x)),rem=[...cur].filter(x=>!novo.includes(x));
+    if(!novo.length){toast("Defina ao menos um objetivo (campo obrigatório).",true);return}
+    if(k==="tt")a.obj=novo;else a.areas[k]=novo;
+    LOG.push({q:nowStamp(),u:quem(),a:a.id,area:AREA_INFO[k][0],campo:"Objetivos"+(k==="tt"?" táticos":""),de:cur.size+" definidos",para:`${novo.length} definidos (+${add.length} / −${rem.length})`});
+    closeAll();toast(`Objetivos de ${AREA_INFO[k][0]} salvos: +${add.length} / −${rem.length}.`);renderShell();renderPage()},"Salvar objetivos");
+  upd();
+}
+function editFicha(id){
+  const a=atl(id);
+  openModal("Editar ficha · "+a.nome,`<div class="fgrid"><div class="fld"><label>Posição <span class="req">*</span></label><select id="e_pos">${POSICOES.map(p=>`<option ${p===a.posicao?"selected":""}>${p}</option>`).join("")}</select><div class="hint">Trocar a posição remove os objetivos táticos (KPIs são por posição).</div></div>
+   <div class="fld"><label>Frequência de treino <span class="req">*</span></label><select id="e_freq">${OPT.freqTreino.map(p=>`<option ${p===a.freq?"selected":""}>${p}</option>`).join("")}</select></div>
+   <div class="fld full"><label>Link da playlist (opcional)</label><input id="e_pl" type="url" value="${esc(a.playlist)}" placeholder="https://"></div></div>`,()=>{
+    const pos=$("#e_pos").value,fr=$("#e_freq").value,pl=$("#e_pl").value.trim();if(pl&&!/^https?:\/\//.test(pl)){toast("Informe uma URL iniciando com http(s)://",true);return}
+    let n=0;const lg=(c,d,p)=>{LOG.push({q:nowStamp(),u:quem(),a:a.id,area:"Registro",campo:c,de:d,para:p});n++};
+    if(pos!==a.posicao){lg("Posição",a.posicao,pos);if(a.obj.length)lg("Objetivos táticos",a.obj.length+" definidos","0 (reset por troca de posição)");a.posicao=pos;a.obj=[]}
+    if(fr!==a.freq){lg("Frequência de treino",a.freq,fr);a.freq=fr}if(pl!==a.playlist){lg("Playlist",a.playlist||"—",pl||"—");a.playlist=pl}
+    closeAll();toast(n?`${n} alteração(ões) registrada(s) na trilha.`:"Nenhuma alteração.");renderShell();renderPage()});
+}
+
+/* ================= NOVO ATLETA ================= */
+let NF={nome:"",nasc:"",cat:"",pos:"",freq:"",pl:"",resp:USUARIO,errors:{}};
+PAGES.novo=function(){
+  if(!canEdit("reg")){$("#content").innerHTML=`<div class="webpart"><div class="lockbox"><div style="font-size:40px">🔒</div><h3 style="color:var(--sp-text)">Cadastro de atletas restrito</h3><p>Apenas Registro/Controladoria cria fichas. Perfil atual: <b>${pName()}</b>.</p><button class="btn-secondary" onclick="PERSONA='ctrl';renderShell();renderPage()">Ver como Controladoria</button></div></div>`;return}
+  const e=NF.errors,F=(k,l,c,o={})=>`<div class="fld ${e[k]?"err":""} ${o.full?"full":""}"><label>${l}${o.req?' <span class="req">*</span>':""}</label>${c}${o.hint?`<div class="hint">${o.hint}</div>`:""}<div class="emsg">${esc(e[k]||"")}</div></div>`;
+  const ficha=NF.cat?(NF.cat==="Profissional"?"Profissional":"Base"):"";
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>Novo atleta</h2><div class="sub">Categorização → ficha base ou profissional. Campos obrigatórios bloqueiam o registro.</div></div></div><div class="wp-body"><div class="fgrid" style="max-width:860px">
+   ${F("nome","Nome completo",`<input id="n_nome" value="${esc(NF.nome)}" oninput="NF.nome=this.value">`,{req:1,full:1})}
+   ${F("nasc","Data de nascimento",`<input id="n_nasc" type="date" value="${NF.nasc}" onchange="NF.nasc=this.value">`,{req:1})}
+   ${F("cat","Categoria",`<select id="n_cat" onchange="NF.cat=this.value;NF.errors={};PAGES.novo()"><option value="">— selecione —</option><option disabled>Sub-14 (reservada — entra quando o clube voltar a participar)</option>${["Sub-15","Sub-17","Sub-20","Profissional"].map(c=>`<option ${NF.cat===c?"selected":""}>${c}</option>`).join("")}</select>`,{req:1})}
+   ${ficha?`<div class="infobox ${ficha==="Base"?"":"warn"}"><b>Ficha ${ficha}</b> — ${ficha==="Base"?"5 áreas (Tático/Técnico, Físico, Nutrição, Psicologia e Serviço Social) e KPIs por posição.":"sem Serviço Social e sem KPIs de base."}</div>`:""}
+   ${F("pos","Posição",`<select id="n_pos" onchange="NF.pos=this.value;PAGES.novo()"><option value="">— selecione —</option>${POSICOES.map(c=>`<option ${NF.pos===c?"selected":""}>${c}</option>`).join("")}</select>`,{req:1,hint:NF.pos?`${KPI_BASE.filter(k=>k[0]===NF.pos).length} KPIs em ${new Set(KPI_BASE.filter(k=>k[0]===NF.pos).map(k=>k[2])).size} comportamentos disponíveis para definir objetivos.`:"Define os objetivos e KPIs disponíveis."})}
+   ${F("freq","Frequência de treino",`<select id="n_freq" onchange="NF.freq=this.value"><option value="">— selecione —</option>${OPT.freqTreino.map(c=>`<option ${NF.freq===c?"selected":""}>${c}</option>`).join("")}</select>`,{req:1})}
+   ${F("pl","Link da playlist (opcional)",`<input id="n_pl" type="url" value="${esc(NF.pl)}" oninput="NF.pl=this.value" placeholder="https://">`,{hint:"Pode ficar para o fim do ciclo.",full:1})}
+   ${F("resp","Responsável pelo cadastro",`<input id="n_resp" value="${esc(NF.resp)}" oninput="NF.resp=this.value">`,{req:1,full:1})}
+  </div><div style="margin-top:18px;display:flex;gap:8px"><button class="btn-primary" onclick="saveAtleta()">Salvar atleta</button><button class="btn-secondary" onclick="NF={nome:'',nasc:'',cat:'',pos:'',freq:'',pl:'',resp:USUARIO,errors:{}};PAGES.novo()">Limpar</button></div></div></div>`;
+};
+function saveAtleta(){
+  const e={};const v=NF;["nome","nasc","cat","pos","freq","resp"].forEach(k=>{if(!v[k]||!String(v[k]).trim())e[k]="Campo obrigatório."});
+  if(v.nome&&v.nome.trim().split(/\s+/).length<2)e.nome="Informe nome e sobrenome.";
+  if(v.pl&&!/^https?:\/\//.test(v.pl))e.pl="Informe uma URL iniciando com http(s)://";
+  if(v.nasc&&v.cat&&!e.nasc){const[y,m,d]=v.nasc.split("-");const ni=`${d}/${m}/${y}`,age=idade(ni);const lim={"Sub-15":15,"Sub-17":17,"Sub-20":20}[v.cat];
+    if(age<8||new Date(v.nasc)>new Date(2026,10,9))e.nasc="Data de nascimento inválida.";else if(lim&&age>lim)e.cat=`Idade (${age}) incompatível com ${v.cat} (máx. ${lim} anos).`;else if(!lim&&age<16)e.cat=`Idade (${age}) incompatível com Profissional (mín. 16 anos).`}
+  if(v.nome&&ATLETAS.some(a=>a.nome.toLowerCase()===v.nome.trim().toLowerCase()&&a.nasc===v.nasc.split("-").reverse().join("/")))e.nome="Atleta já cadastrado (mesmo nome e nascimento).";
+  NF.errors=e;if(Object.keys(e).length){PAGES.novo();toast(`Cadastro bloqueado: ${Object.keys(e).length} pendência(s).`,true);return}
+  const seq=Math.max(...ATLETAS.map(a=>parseInt(a.id.split("-")[2])))+1,pref=v.cat==="Profissional"?"PRO":v.cat.replace("-","").toUpperCase();
+  const a=mk(`BFC-${pref}-${String(seq).padStart(4,"0")}`,v.nome.trim(),v.nasc.split("-").reverse().join("/"),v.cat,v.pos,v.freq,false,[],[],[],[],[],false);a.playlist=v.pl;a.resp=v.resp.trim();a.criado=HOJE;
+  ATLETAS.push(a);LOG.push({q:nowStamp(),u:quem(),a:a.id,area:"Registro",campo:"Ficha",de:"",para:"Criada ("+a.ficha+")"});
+  NF={nome:"",nasc:"",cat:"",pos:"",freq:"",pl:"",resp:USUARIO,errors:{}};toast(`${a.nome} cadastrado — ${a.id} (Ficha ${a.ficha}).`);go("ficha",a.id);
+}
+
+/* ================= CATÁLOGO ================= */
+let CT={pos:"Meia",q:""};
+PAGES.catalogo=function(){
+  const rows=KPI_BASE.filter(k=>k[0]===CT.pos&&(!CT.q||k.join(" ").toLowerCase().includes(CT.q.toLowerCase())));
+  const comp=[...new Set(rows.map(r=>r[2]))];const usa=ATLETAS.filter(a=>a.posicao===CT.pos);
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>Objetivos e KPIs por posição</h2><div class="sub">Base de Dados KPIs (planilha atual): ${KPI_BASE.length} KPIs em ${POSICOES.length} posições, ofensivos e defensivos. As áreas escolhem os objetivos na ficha do atleta.</div></div></div></div>
+  <div class="kpi-grid">${POSICOES.map(p=>`<div class="kcard ${CT.pos===p?"warn":""}" style="cursor:pointer" onclick="CT.pos='${p}';PAGES.catalogo()"><div class="lbl">${p}</div><div class="val">${KPI_BASE.filter(k=>k[0]===p).length}</div><div class="sub">${new Set(KPI_BASE.filter(k=>k[0]===p).map(k=>k[2])).size} comportamentos · ${ATLETAS.filter(a=>a.posicao===p).length} atleta(s)</div></div>`).join("")}</div>
+  <div class="filters"><b>${CT.pos}</b><input type="text" placeholder="🔍 Buscar comportamento ou KPI" value="${esc(CT.q)}" style="padding:6px 10px;border:1px solid var(--sp-border);border-radius:3px;width:260px" oninput="CT.q=this.value;PAGES.catalogo();const i=$('.filters input');i.focus();i.setSelectionRange(99,99)"><span class="note" style="margin:0">${rows.length} KPIs · ${comp.length} comportamentos${usa.length?" · atletas: "+usa.map(a=>a.nome.split(" ")[0]).join(", "):""}</span></div>
+  ${["Ofensiva","Defensiva"].map(f=>{const cs=comp.filter(c=>faseOf(CT.pos,c)===f);return cs.length?`<div class="card"><h3><span class="pill ${f==="Ofensiva"?"pill-of":"pill-def"}">${f}</span> &nbsp;${cs.length} comportamento(s)</h3>${cs.map(c=>`<div class="acc"><div class="h">${esc(c)}${usa.filter(a=>a.obj.includes(c)).map(a=>`<span class="pill pill-ok" style="margin-left:auto">objetivo de ${a.nome.split(" ")[0]}</span>`).join("")}</div><ul>${rows.filter(r=>r[2]===c).map(r=>`<li>${esc(r[3])}</li>`).join("")}</ul></div>`).join("")}</div>`:""}).join("")||`<div class="empty">Nada encontrado.</div>`}`;
+};
+
+/* ================= STATUS ================= */
+PAGES.status=function(){
+  const tot=ATLETAS.reduce((s,a)=>s+pendCount(a),0);
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>Status por área × atleta</h2><div class="sub">Radar de preenchimento — o que está em dia e o que falta lançar no ciclo, por área e responsável</div></div><div class="wp-actions"><button class="btn-primary" onclick="toast('${tot} pendência(s) enviadas aos gestores das áreas por Teams/e-mail (simulado — Módulo 2).')">🔔 Enviar alerta semanal</button></div></div>
+  <div style="overflow-x:auto"><table class="t2"><thead><tr><th>Atleta</th><th>Ficha</th>${STAT_COLS.map(c=>`<th>${c[1]}</th>`).join("")}<th>Pendências</th></tr></thead><tbody>${ATLETAS.map(a=>`<tr style="cursor:pointer" onclick="go('ficha','${a.id}')"><td><b>${esc(a.nome)}</b></td><td>${a.ficha}</td>${STAT_COLS.map(c=>`<td>${stBadge(status(a,c[0]))}</td>`).join("")}<td><b>${pendCount(a)}</b></td></tr>`).join("")}</tbody></table></div>
+  <div class="wp-body"><div class="note">“Em dia” = objetivos definidos (e jogos lançados, em KPIs de Jogo). Brayan Bismark (dado real) mantém Físico, Nutrição, Serviço Social, Psicologia e KPIs de Jogo pendentes, como no checkpoint original. Serviço Social não se aplica à ficha profissional.</div></div></div>`;
+};
+PAGES.auditoria=function(){
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>Trilha de alterações</h2><div class="sub">Todas as alterações do cadastro central — usuário, campo, data e hora. Edite uma ficha ou defina objetivos para ver novos registros.</div></div></div></div>${audTable(LOG,true)}`;
+};
+
+/* ================= GOVERNANÇA ================= */
+PAGES.governanca=function(){
+  const lv={T:'<span class="badge b-verde">Total</span>',I:'<span class="badge b-amarelo">Indicador</span>',N:'<span class="badge b-vermelho">Sem acesso</span>'};
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>Estrutura e governança</h2><div class="sub">Como o cadastro central organiza o PDI do Barra FC</div></div></div><div class="wp-body"><div class="flow">
+   <div><b><span class="n">1</span>Categorização</b>Atleta elegível ao PDI → categoria e posição. Ficha base (Sub-15, 17 e 20) ou profissional. Sub-14 reservada.</div>
+   <div><b><span class="n">2</span>Objetivos por área</b>Tático/Técnico, Físico, Nutrição, Psicologia e Serviço Social (só base) definem objetivos uma vez no início do ciclo.</div>
+   <div><b><span class="n">3</span>Formulários</b>Só abrem com objetivos definidos. Validação automática: obrigatórios, contagem que fecha e mês de competência.</div>
+   <div><b><span class="n">4</span>Acompanhamento e Board</b>Alerta semanal ao gestor, conclusões dos checkpoints e apresentação da Controladoria por categoria, atleta e pilar.</div></div></div></div>
+  <div class="grid2e"><div class="card"><h3>Ficha base × ficha profissional</h3><table class="t2"><thead><tr><th>Item</th><th>Base</th><th>Profissional</th></tr></thead><tbody><tr><td>Categorias</td><td>Sub-15, 17, 20 (Sub-14 reservada)</td><td>Profissional</td></tr><tr><td>Tático/Técnico, Físico, Nutrição, Psicologia</td><td>Sim</td><td>Sim</td></tr><tr><td>Serviço Social</td><td>Sim</td><td>Não se aplica</td></tr><tr><td>KPIs de base</td><td>Sim, por posição</td><td>Não</td></tr></tbody></table></div>
+  <div class="card"><h3>Regras de qualidade do dado</h3><div class="rule"><i>✔</i><span>Campos obrigatórios bloqueiam o registro.</span></div><div class="rule"><i>✔</i><span>Idade compatível com a categoria; sem duplicidade de atleta.</span></div><div class="rule"><i>✔</i><span>Responsável identificado e trilha de alterações em cada ficha.</span></div><div class="rule"><i>✔</i><span>Intervenções só dos objetivos definidos; contagens que fecham.</span></div><div class="rule"><i>✔</i><span>Fechamento mensal por competência (Controladoria).</span></div></div></div>
+  <div class="card"><h3>Matriz de visibilidade</h3><div class="sub">Quem enxerga o quê do mesmo atleta — troque o perfil no topo da página para ver a ficha de cada ponto de vista</div><div style="overflow-x:auto"><table class="t2"><thead><tr><th>Perfil</th>${AREAS.map(a=>`<th>${a[1]}</th>`).join("")}</tr></thead><tbody>${PERSONAS.map(p=>`<tr><td><b>${p[1]}</b></td>${AREAS.map(a=>`<td>${lv[ACCESS[p[0]][a[0]]]}</td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="note">Ponto a validar no kickoff: a proposta prevê visão total da Controladoria; aqui o conteúdo clínico (Nutrição, Psicologia e Serviço Social) aparece só como indicador agregado, como no BI de apresentação (LGPD).</div></div>`;
+};
+
+/* ================= TOOLTIP + CANVAS ================= */
+const TIP=$("#tooltip");
+function showTip(ev,lines){TIP.innerHTML=lines.join("<br>");TIP.style.display="block";TIP.style.left=(ev.clientX+14)+"px";TIP.style.top=(ev.clientY-10)+"px"}
+function hideTip(){TIP.style.display="none"}
+function setupCanvas(c,h){const dpr=window.devicePixelRatio||1;const W=c.offsetWidth||300,H=h||c.offsetHeight||240;c.style.height=H+"px";c.width=W*dpr;c.height=H*dpr;const ctx=c.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);return{ctx,W,H}}
+function hookTips(c,tips,fmt){c.onmousemove=ev=>{const r=c.getBoundingClientRect();const mx=ev.clientX-r.left,my=ev.clientY-r.top;const hit=tips.find(t=>mx>=t.x&&mx<=t.x+t.w&&my>=t.y&&my<=t.y+t.h);if(hit)showTip(ev,fmt(hit));else hideTip()};c.onmouseleave=hideTip}
+function grid(ctx,PAD,cW,cH,maxV,minV,pct){ctx.strokeStyle="#e3ebf5";ctx.lineWidth=1;ctx.fillStyle="#7a8ba0";ctx.font="11px Segoe UI,Arial";ctx.textAlign="right";for(let i=0;i<=5;i++){const v=minV+(maxV-minV)*i/5;const y=PAD.top+cH-(v-minV)/(maxV-minV)*cH;ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cW,y);ctx.stroke();ctx.fillText(pct?Math.round(v*100)+"%":(Math.abs(v)>=10?Math.round(v):v.toFixed(1).replace(".",",")),PAD.left-6,y+4)}}
+function noData(c,msg){const{ctx,W,H}=setupCanvas(c,c.offsetHeight||200);ctx.fillStyle="#7a8ba0";ctx.font="13px Segoe UI";ctx.textAlign="center";ctx.fillText(msg||"Sem dados para o filtro",W/2,H/2);c.onmousemove=null}
+function drawGrouped(c,labels,series,o={}){
+  if(!labels.length)return noData(c);
+  const{ctx,W,H}=setupCanvas(c,o.h);const PAD={top:18,right:16,bottom:40,left:o.pct?46:36};const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  const maxV=o.pct?1:Math.max(1,...series.flatMap(s=>s.data.map(v=>v||0)))*1.15;grid(ctx,PAD,cW,cH,maxV,0,o.pct);
+  const gW=cW/labels.length,bw=Math.min(gW*0.7/series.length,36),tips=[];
+  labels.forEach((lb,i)=>{const start=PAD.left+i*gW+(gW-bw*series.length)/2;
+    series.forEach((s,j)=>{const v=s.data[i];if(v==null)return;const bh=v/maxV*cH,x=start+j*bw,y=PAD.top+cH-bh;ctx.fillStyle=s.color;ctx.beginPath();ctx.roundRect(x,y,bw-2,bh,[3,3,0,0]);ctx.fill();tips.push({x,y,w:bw,h:bh,cat:lb,label:s.label,val:v});
+      ctx.fillStyle="#163028";ctx.font="bold 10px Segoe UI";ctx.textAlign="center";ctx.fillText(o.pct?fPct(v):fN(v),x+bw/2-1,y-4)});
+    ctx.fillStyle="#163028";ctx.font="bold 10.5px Segoe UI";ctx.textAlign="center";ctx.fillText(lb,PAD.left+i*gW+gW/2,H-PAD.bottom+16)});
+  hookTips(c,tips,t=>[`<b>${esc(t.cat)}</b>`,`${esc(t.label)}: <b>${o.pct?fPct(t.val):fN(t.val)}</b>`])}
+function drawStacked(c,labels,series,o={}){
+  if(!labels.length)return noData(c);
+  const{ctx,W,H}=setupCanvas(c,o.h);const PAD={top:18,right:16,bottom:40,left:40};const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  const tot=labels.map((_,i)=>series.reduce((s,x)=>s+(x.data[i]||0),0));const maxV=Math.max(1,...tot)*1.12;grid(ctx,PAD,cW,cH,maxV,0);
+  const gW=cW/labels.length,bw=Math.min(gW*0.5,48),tips=[];
+  labels.forEach((lb,i)=>{let acc=0;const x=PAD.left+i*gW+(gW-bw)/2;series.forEach(s=>{const v=s.data[i]||0,bh=v/maxV*cH,y=PAD.top+cH-acc-bh;ctx.fillStyle=s.color;ctx.fillRect(x,y,bw,bh);tips.push({x,y,w:bw,h:bh,cat:lb,label:s.label,val:v});if(bh>16){ctx.fillStyle="#fff";ctx.font="bold 10px Segoe UI";ctx.textAlign="center";ctx.fillText(v,x+bw/2,y+bh/2+4)}acc+=bh});
+    ctx.fillStyle="#163028";ctx.font="bold 10.5px Segoe UI";ctx.textAlign="center";ctx.fillText(lb,PAD.left+i*gW+gW/2,H-PAD.bottom+16)});
+  hookTips(c,tips,t=>[`<b>${esc(t.cat)}</b>`,`${esc(t.label)}: <b>${t.val}</b>`])}
+function drawLine(c,labels,series,o={}){
+  if(!labels.length)return noData(c);
+  const{ctx,W,H}=setupCanvas(c,o.h);const PAD={top:18,right:16,bottom:44,left:o.pct?46:36};const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  grid(ctx,PAD,cW,cH,1,0,true);const stepX=labels.length>1?cW/(labels.length-1):0,tips=[];
+  series.forEach(s=>{ctx.strokeStyle=s.color;ctx.lineWidth=2.4;ctx.beginPath();let first=true;s.data.forEach((v,i)=>{if(v==null)return;const x=PAD.left+(labels.length>1?i*stepX:cW/2),y=PAD.top+cH-v*cH;if(first){ctx.moveTo(x,y);first=false}else ctx.lineTo(x,y)});ctx.stroke();
+    s.data.forEach((v,i)=>{if(v==null)return;const x=PAD.left+(labels.length>1?i*stepX:cW/2),y=PAD.top+cH-v*cH;ctx.beginPath();ctx.arc(x,y,4,0,7);ctx.fillStyle=s.color;ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();tips.push({x:x-7,y:y-7,w:14,h:14,cat:labels[i],label:s.label,val:v})})});
+  ctx.fillStyle="#163028";ctx.font="10px Segoe UI";ctx.textAlign="center";const every=Math.ceil(labels.length/Math.max(1,Math.floor(cW/48)));labels.forEach((lb,i)=>{if(i%every===0)ctx.fillText(lb,PAD.left+(labels.length>1?i*stepX:cW/2),H-PAD.bottom+16)});
+  hookTips(c,tips,t=>[`<b>${esc(t.label)}</b>`,`${esc(t.cat)}: <b>${fPct(t.val)}</b>`])}
+function drawDonut(c,labels,values,colors,o={}){
+  const tot=values.reduce((a,b)=>a+b,0);if(!tot)return noData(c);
+  const{ctx,W,H}=setupCanvas(c,o.h);const cx=W*0.36,cy=H/2,R=Math.min(cx-10,H/2-10),r=R*0.58;let a=-Math.PI/2;const segs=[];
+  values.forEach((v,i)=>{const da=v/tot*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,R,a,a+da);ctx.arc(cx,cy,r,a+da,a,true);ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();segs.push({a0:a,a1:a+da,i});a+=da});
+  ctx.fillStyle="#083B7A";ctx.font="bold 22px Segoe UI";ctx.textAlign="center";ctx.fillText(tot,cx,cy+4);ctx.font="10px Segoe UI";ctx.fillStyle="#7a8ba0";ctx.fillText("registros",cx,cy+18);
+  ctx.textAlign="left";ctx.font="12px Segoe UI";labels.forEach((lb,i)=>{const y=cy-labels.length*11+i*24+8;ctx.fillStyle=colors[i];ctx.fillRect(W*0.36+R+22,y-9,11,11);ctx.fillStyle="#163028";ctx.fillText(`${lb} (${values[i]})`,W*0.36+R+38,y)});
+  c.onmousemove=ev=>{const b=c.getBoundingClientRect(),mx=ev.clientX-b.left-cx,my=ev.clientY-b.top-cy,d=Math.hypot(mx,my);if(d<r||d>R)return hideTip();let ang=Math.atan2(my,mx);if(ang<-Math.PI/2)ang+=Math.PI*2;const s=segs.find(s=>ang>=s.a0&&ang<s.a1);if(s)showTip(ev,[`<b>${esc(labels[s.i])}</b>`,`${values[s.i]} (${(values[s.i]/tot*100).toFixed(0)}%)`]);else hideTip()};c.onmouseleave=hideTip}
+function drawHBar(c,labels,values,colors,o={}){
+  if(!labels.length)return noData(c);
+  const rowH=26,h=Math.max(120,labels.length*rowH+30);const{ctx,W,H}=setupCanvas(c,h);const L=Math.min(W*0.46,260),PAD={top:8,right:54,bottom:20,left:L};const cW=W-PAD.left-PAD.right;const maxV=o.pct?1:Math.max(...values)*1.1||1;const tips=[];
+  ctx.strokeStyle="#e3ebf5";ctx.fillStyle="#7a8ba0";ctx.font="10px Segoe UI";ctx.textAlign="center";for(let i=0;i<=4;i++){const x=PAD.left+cW*i/4;ctx.beginPath();ctx.moveTo(x,PAD.top);ctx.lineTo(x,H-PAD.bottom);ctx.stroke();ctx.fillText(o.pct?Math.round(maxV*i/4*100)+"%":(maxV*i/4).toFixed(0),x,H-6)}
+  labels.forEach((lb,i)=>{const y=PAD.top+i*rowH+3,bw=values[i]/maxV*cW;ctx.fillStyle=colors[i];ctx.beginPath();ctx.roundRect(PAD.left,y,Math.max(bw,2),rowH-8,[0,3,3,0]);ctx.fill();tips.push({x:PAD.left,y,w:Math.max(bw,4),h:rowH-8,cat:lb,val:values[i],extra:o.extra&&o.extra[i]});
+    ctx.fillStyle="#163028";ctx.font="11px Segoe UI";ctx.textAlign="right";let t=lb;if(ctx.measureText(t).width>L-14){while(ctx.measureText(t+"…").width>L-14&&t.length>4)t=t.slice(0,-1);t+="…"}ctx.fillText(t,PAD.left-8,y+(rowH-8)/2+4);
+    ctx.textAlign="left";ctx.font="bold 11px Segoe UI";ctx.fillText(o.pct?fPct(values[i]):fN(values[i]),PAD.left+bw+6,y+(rowH-8)/2+4)});
+  hookTips(c,tips,t=>[`<b>${esc(t.cat)}</b>`,o.pct?fPct(t.val):fN(t.val)].concat(t.extra?[t.extra]:[]))}
+
+/* ================= INIT ================= */
+(function(){const h=location.hash.replace("#","");PAGE=PAGES[h]&&h!=="ficha"?h:"atletas";renderShell();renderPage()})();
+</script></body></html>
