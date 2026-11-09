@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tático Técnico — SharePoint · BarraFC</title>
+<!--
+  SIMULAÇÃO DE SITE SHAREPOINT — Equipe Tático Técnico (v3)
+  COMPATÍVEL COM SHAREPOINT
+  • Sem dependências externas — zero CDN, zero imports (gráficos em Canvas HTML5)
+  • Para incorporar: upload no SharePoint → copie o URL → Embed web part → <iframe src="URL">
+  • Para uso real: Site de Equipe + Lista com colunas "Choice" + formulário Power Apps (ver "Base de Dados (Opções)")
+-->
+<style>
+:root{
+  --sp-blue:#0078D4;--sp-blue-dark:#004E8C;--sp-bg:#FAF9F8;--sp-text:#242424;--sp-sub:#616161;--sp-border:#E1DFDD;--sp-hover:#F3F2F1;
+  --azul-escuro:#083B7A;--azul-principal:#0B4FA2;--azul-claro:#3A78C2;--destaque:#F2C100;--verde:#2E7D32;--vermelho:#C62828;--ambar:#B26A00;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',Aptos,Arial,sans-serif;background:var(--sp-bg);color:var(--sp-text);font-size:14px}
+button{font-family:inherit}
+.suitebar{background:var(--sp-blue-dark);color:#fff;display:flex;align-items:center;height:48px;padding:0 12px;gap:14px;font-size:13px}
+.waffle{width:20px;height:20px;display:grid;grid-template-columns:repeat(3,5px);grid-template-rows:repeat(3,5px);gap:2px}
+.waffle span{background:#fff;display:block}
+.sp-logo{font-weight:600}
+.suitebar .search{margin-left:auto;background:rgba(255,255,255,.15);border-radius:4px;padding:6px 12px;font-size:12.5px;width:260px;color:#e8f0fb}
+.suitebar .icons{display:flex;gap:16px;align-items:center}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--destaque);color:#083B7A;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.sitehead{background:#fff;border-bottom:1px solid var(--sp-border);padding:14px 32px}
+.crumb{font-size:11.5px;color:var(--sp-sub);margin-bottom:6px}
+.sitehead .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sitehead .icon{width:56px;height:56px;border-radius:8px;background:var(--azul-principal);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff}
+.sitehead h1{margin:0;font-size:1.4rem;font-weight:600}
+.sitehead .desc{font-size:12.5px;color:var(--sp-sub);margin-top:2px}
+.members{margin-left:auto;text-align:right;font-size:12px;color:var(--sp-sub)}
+.members .btn{display:inline-block;margin-top:4px;background:var(--sp-blue);color:#fff;padding:5px 14px;border-radius:3px;font-size:12.5px;font-weight:600;cursor:pointer}
+.sitenav{background:#fff;border-bottom:1px solid var(--sp-border);padding:0 32px;display:flex;gap:2px;overflow-x:auto}
+.sitenav a{padding:11px 14px;font-size:13px;color:var(--sp-text);text-decoration:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.sitenav a.active{border-bottom-color:var(--sp-blue);color:var(--sp-blue);font-weight:600}
+.sitenav a:hover{background:var(--sp-hover)}
+.layout{display:flex;max-width:1560px;margin:0 auto}
+.leftnav{width:236px;padding:20px 12px;flex-shrink:0}
+.section-lbl{font-size:11px;text-transform:uppercase;color:var(--sp-sub);font-weight:600;padding:6px 12px;letter-spacing:.4px}
+.leftnav a{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13.5px;color:var(--sp-text);text-decoration:none;border-radius:4px;margin-bottom:1px;cursor:pointer}
+.leftnav a:hover{background:var(--sp-hover)}
+.leftnav a.active{background:#EDF3FC;color:var(--sp-blue);font-weight:600;border-left:3px solid var(--sp-blue);padding-left:9px}
+.leftnav .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.leftnav .lock{margin-left:auto;font-size:11px;opacity:.6}
+.content{flex:1;padding:20px 32px 60px;min-width:0}
+@media(max-width:900px){.leftnav{display:none}.content{padding:16px}.sitehead,.sitenav{padding-left:16px;padding-right:16px}}
+
+.webpart{background:#fff;border:1px solid var(--sp-border);border-radius:4px;margin-bottom:22px}
+.webpart-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--sp-border);gap:12px;flex-wrap:wrap}
+.webpart-head h2{margin:0;font-size:1.05rem;font-weight:600}
+.webpart-head .sub{font-size:12px;color:var(--sp-sub);margin-top:2px}
+.wp-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wp-body{padding:16px 18px}
+.btn-primary{background:var(--sp-blue);color:#fff;border:none;padding:7px 16px;border-radius:3px;font-size:12.5px;font-weight:600;cursor:pointer}
+.btn-primary:hover{background:#106EBE}
+.btn-secondary{background:#fff;color:var(--sp-text);border:1px solid #8A8886;padding:7px 14px;border-radius:3px;font-size:12.5px;cursor:pointer}
+.btn-secondary:hover{background:var(--sp-hover)}
+.btn-danger{background:#fff;color:var(--vermelho);border:1px solid var(--vermelho);padding:7px 14px;border-radius:3px;font-size:12.5px;cursor:pointer}
+.btn-primary:disabled,.btn-secondary:disabled,.btn-danger:disabled{opacity:.45;cursor:not-allowed}
+
+/* KPI strip */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kpi-strip .kpi{padding:14px 18px;border-right:1px solid var(--sp-border);border-bottom:1px solid var(--sp-border)}
+.kpi .lbl{font-size:11px;color:var(--sp-sub);text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.kpi .val{font-size:1.5rem;font-weight:700;color:var(--azul-escuro);margin-top:4px}
+.kpi .sub{font-size:11.5px;color:var(--sp-sub);margin-top:2px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:18px}
+.kcard{background:#fff;border-radius:10px;padding:14px 16px;border-left:5px solid var(--azul-principal);box-shadow:0 1px 4px rgba(8,59,122,.08)}
+.kcard .lbl{font-size:.7rem;color:var(--sp-sub);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.kcard .val{font-size:1.65rem;font-weight:700;color:var(--azul-escuro);margin-top:4px}
+.kcard .sub{font-size:.72rem;color:var(--sp-sub);margin-top:3px}
+.kcard.ok{border-left-color:var(--verde)}.kcard.warn{border-left-color:var(--destaque)}.kcard.alert{border-left-color:var(--vermelho)}
+
+/* list table */
+.list-toolbar{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--sp-border);font-size:12.5px;color:var(--sp-sub);flex-wrap:wrap}
+.list-toolbar input[type=text],.list-toolbar select,.filters select{border:1px solid var(--sp-border);border-radius:3px;padding:5px 10px;font-size:12.5px;font-family:inherit;background:#fff}
+.list-toolbar input[type=text]{width:220px}
+.viewsel{margin-left:auto}
+table.splist{width:100%;border-collapse:collapse;font-size:12.8px}
+table.splist th{background:#F8F8F8;color:var(--sp-sub);font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--sp-border);font-size:12px;white-space:nowrap;position:sticky;top:0;cursor:pointer;user-select:none}
+table.splist th:hover{background:#EFEFEF;color:var(--sp-blue)}
+table.splist td{padding:9px 12px;border-bottom:1px solid #F0F0F0;white-space:nowrap}
+table.splist tbody tr{cursor:pointer}
+table.splist tbody tr:hover td{background:#F3F9FD}
+table.splist td.wrap{white-space:normal;min-width:260px;max-width:380px}
+.pill{display:inline-block;padding:2px 10px;border-radius:11px;font-size:11.3px;font-weight:600}
+.pill-of{background:#E3F3E8;color:var(--verde)}.pill-def{background:#FCE9E9;color:var(--vermelho)}.pill-video{background:#EAF1FB;color:var(--azul-principal)}.pill-ocorr{background:#FDF2D9;color:#9A6B00}
+.pill-gray{background:#EEE;color:#555}.pill-ok{background:#E3F3E8;color:var(--verde)}.pill-warn{background:#FDF2D9;color:#9A6B00}.pill-bad{background:#FCE9E9;color:var(--vermelho)}
+.badge-count{background:var(--sp-blue);color:#fff;border-radius:9px;font-size:11px;padding:1px 8px;margin-left:8px}
+.empty{padding:36px;text-align:center;color:var(--sp-sub)}
+.chip-filter{border:1px solid var(--sp-border);background:#fff;border-radius:14px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--sp-text)}
+.chip-filter.on{background:#EDF3FC;border-color:var(--sp-blue);color:var(--sp-blue);font-weight:600}
+
+/* generic */
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px}.grid2e{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1000px){.grid2,.grid2e,.grid3{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 4px rgba(8,59,122,.08);margin-bottom:16px}
+.card h3{margin:0 0 4px;font-size:1rem;color:var(--azul-escuro)}
+.card .sub{font-size:.78rem;color:var(--sp-sub);margin-bottom:10px}
+.card canvas{width:100%;display:block}
+.note{font-size:.75rem;color:var(--sp-sub);font-style:italic;margin-top:8px}
+.tabs{display:flex;gap:6px;border-bottom:2px solid var(--sp-border);margin-bottom:16px;flex-wrap:wrap}
+.tab-btn{background:none;border:none;padding:9px 16px;font-size:.85rem;font-weight:600;color:var(--sp-sub);cursor:pointer;border-bottom:3px solid transparent;border-radius:6px 6px 0 0}
+.tab-btn:hover{background:#E3EDF9;color:var(--azul-escuro)}
+.tab-btn.active{color:var(--azul-principal);border-bottom-color:var(--destaque);background:#fff}
+.filters{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;background:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 1px 4px rgba(8,59,122,.08)}
+.filters label{font-size:.78rem;color:var(--sp-sub);font-weight:600}
+table.t2{width:100%;border-collapse:collapse;font-size:.82rem}
+table.t2 th,table.t2 td{padding:8px 10px;border-bottom:1px solid #DCE6F2;text-align:left}
+table.t2 th{background:var(--azul-principal);color:#fff;font-size:.72rem;text-transform:uppercase;letter-spacing:.3px}
+table.t2 tr:nth-child(even) td{background:#F5F9FD}
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:.72rem;font-weight:700;color:#fff}
+.b-verde{background:var(--verde)}.b-vermelho{background:var(--vermelho)}.b-amarelo{background:var(--destaque);color:#0A0A0A}.b-azul{background:var(--azul-claro)}.b-cinza{background:#8A8886}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;font-size:.75rem;color:var(--sp-sub);margin-top:10px}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.heat td.hc{text-align:center;font-weight:700;color:#fff;min-width:74px}
+#tooltip{position:fixed;background:var(--azul-escuro);color:#fff;padding:7px 12px;border-radius:7px;font-size:.72rem;pointer-events:none;display:none;box-shadow:0 3px 10px rgba(0,0,0,.3);z-index:9999;line-height:1.6}
+
+/* home */
+.hero{background:linear-gradient(135deg,var(--azul-escuro),var(--azul-principal));color:#fff;border-radius:6px;padding:26px 28px;margin-bottom:22px}
+.hero h2{margin:0 0 6px;font-size:1.4rem}.hero p{margin:0;color:#CFE0F5;font-size:.9rem;max-width:760px}
+.qlinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.qlink{background:#fff;border:1px solid var(--sp-border);border-radius:6px;padding:16px;cursor:pointer;border-top:4px solid var(--azul-principal)}
+.qlink:hover{box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.qlink b{display:block;margin-bottom:4px}.qlink span{font-size:12px;color:var(--sp-sub)}
+.rule{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:13px}
+.rule:last-child{border:none}.rule i{font-style:normal;color:var(--verde);font-weight:700}
+.feed-item{padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:12.8px}.feed-item small{color:var(--sp-sub);display:block}
+.progress{background:#E3EDF9;border-radius:8px;height:10px;overflow:hidden}.progress>div{background:var(--azul-principal);height:100%}
+
+/* field cards */
+.field-card{border:1px solid var(--sp-border);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.field-head{background:#F8F8F8;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--sp-border);gap:8px}
+.field-head .name{font-weight:600;font-size:13.5px}
+.field-head .type{font-size:11px;color:var(--sp-sub);background:#fff;border:1px solid var(--sp-border);padding:2px 8px;border-radius:10px}
+.field-body{padding:12px 16px}
+.choice-chip{display:inline-block;background:#EDF3FC;color:var(--azul-principal);border:1px solid #C7DCF5;padding:4px 11px;border-radius:4px;font-size:12px;margin:3px 5px 3px 0}
+.field-note{font-size:11.5px;color:var(--sp-sub);margin-top:8px;font-style:italic}
+
+/* docs */
+.fileicon{display:inline-block;width:22px;text-align:center;margin-right:6px}
+.folder-link{color:var(--sp-blue);cursor:pointer;font-weight:600}.folder-link:hover{text-decoration:underline}
+
+/* notes */
+.notes{display:grid;grid-template-columns:170px 220px 1fr;min-height:430px;border:1px solid var(--sp-border);border-radius:4px;background:#fff}
+.notes>div{padding:10px;border-right:1px solid var(--sp-border)}.notes>div:last-child{border:none}
+.notes .nsec{padding:8px 10px;border-radius:4px;cursor:pointer;font-size:13px;margin-bottom:3px}
+.notes .nsec.on{background:#EDF3FC;color:var(--sp-blue);font-weight:600}
+.notes .npage{padding:8px 10px;border-bottom:1px solid #F0F0F0;cursor:pointer;font-size:13px}.notes .npage.on{background:#FFF8D6}
+.notes input.ntitle{width:100%;font-size:1.2rem;font-weight:600;border:none;border-bottom:1px solid var(--sp-border);padding:6px 0;margin-bottom:8px;outline:none;font-family:inherit}
+.notes textarea{width:100%;height:330px;border:none;outline:none;resize:none;font-family:inherit;font-size:13.5px;line-height:1.6}
+@media(max-width:800px){.notes{grid-template-columns:1fr}}
+
+/* slide-over + modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;z-index:1000}
+.overlay.on{display:block}
+.panel{position:fixed;top:0;right:0;height:100%;width:min(480px,100%);background:#fff;box-shadow:-4px 0 18px rgba(0,0,0,.25);z-index:1001;transform:translateX(100%);transition:.2s;display:flex;flex-direction:column}
+.panel.on{transform:none}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--sp-border);display:flex;justify-content:space-between;align-items:center}
+.panel-head h3{margin:0;font-size:1.05rem}
+.xbtn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--sp-sub)}
+.panel-body{padding:16px 20px;overflow:auto;flex:1}
+.dl{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;font-size:13px;margin-bottom:16px}.dl dt{color:var(--sp-sub)}.dl dd{margin:0;font-weight:500}
+.modal{position:fixed;top:4vh;left:50%;transform:translateX(-50%);width:min(760px,96vw);max-height:92vh;background:#fff;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.35);z-index:1002;display:none;flex-direction:column}
+.modal.on{display:flex}
+.modal-head{padding:16px 22px;border-bottom:1px solid var(--sp-border);display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{margin:0;font-size:1.1rem}
+.modal-body{padding:18px 22px;overflow:auto}
+.modal-foot{padding:12px 22px;border-top:1px solid var(--sp-border);display:flex;gap:8px;justify-content:flex-end;align-items:center;background:#FAFAFA;border-radius:0 0 6px 6px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.fgrid .full{grid-column:1/-1}
+@media(max-width:640px){.fgrid{grid-template-columns:1fr}}
+.fld label{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px}
+.fld label .req{color:var(--vermelho)}
+.fld input,.fld select,.fld textarea{width:100%;padding:7px 9px;border:1px solid #8A8886;border-radius:3px;font-size:13px;font-family:inherit;background:#fff}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid var(--sp-blue);outline-offset:-1px;border-color:var(--sp-blue)}
+.fld input[readonly]{background:#F3F2F1;color:#555}
+.fld .hint{font-size:11.5px;color:var(--sp-sub);margin-top:3px}
+.fld.err input,.fld.err select,.fld.err textarea{border-color:var(--vermelho);background:#FFF6F6}
+.fld .emsg{color:var(--vermelho);font-size:11.5px;margin-top:3px;display:none}
+.fld.err .emsg{display:block}
+.fsec{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--azul-principal);font-weight:700;border-bottom:1px solid var(--sp-border);padding-bottom:4px;margin-top:6px}
+.infobox{grid-column:1/-1;background:#EAF1FB;border-left:4px solid var(--azul-principal);padding:9px 12px;font-size:12.5px;border-radius:3px}
+.infobox.warn{background:#FFF6DC;border-color:var(--destaque)}.infobox.bad{background:#FDECEC;border-color:var(--vermelho);color:#7a1a1a}.infobox.good{background:#E6F4EA;border-color:var(--verde)}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(30px);background:#323130;color:#fff;padding:12px 20px;border-radius:4px;font-size:13px;z-index:3000;opacity:0;transition:.25s;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.toast.err{background:var(--vermelho)}
+footer{text-align:center;padding:24px;font-size:11.5px;color:var(--sp-sub);border-top:1px solid var(--sp-border);margin-top:20px}
+</style>
+</head>
+<body>
+<div id="tooltip"></div>
+<div class="toast" id="toast"></div>
+
+<div class="suitebar">
+  <div class="waffle"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="sp-logo">📁 SharePoint</div>
+  <div class="search">🔍 Pesquisar neste site</div>
+  <div class="icons"><span>🔔</span><span>⚙️</span><span class="avatar" title="Leonardo V. (conta de demonstração)">LV</span></div>
+</div>
+
+<div class="sitehead">
+  <div class="crumb">BarraFC &nbsp;›&nbsp; Departamento de Futebol &nbsp;›&nbsp; Tático Técnico</div>
+  <div class="row">
+    <div class="icon">⚽</div>
+    <div>
+      <h1>Tático Técnico</h1>
+      <div class="desc">Equipe da Comissão Técnica — intervenções, vídeos, ocorrências e KPIs de jogo por atleta</div>
+    </div>
+    <div class="members">3 membros · Site privado<div class="btn" onclick="toast('Protótipo: o convite é feito no SharePoint real.')">+ Convidar pessoas</div></div>
+  </div>
+</div>
+
+<div class="sitenav" id="topnav"></div>
+
+<div class="layout">
+  <div class="leftnav" id="leftnav"></div>
+  <div class="content" id="content"></div>
+</div>
+
+<footer>Simulação de Site de Equipe SharePoint — Tático Técnico · BarraFC · KLIT Integradora de T.I. · Dados demonstrativos (Brayan Bismark: dado real do checkpoint; demais atletas simulados) · Gerado em 09/11/2026</footer>
+
+<!-- slide-over de detalhe -->
+<div class="overlay" id="ov" onclick="closeAll()"></div>
+<div class="panel" id="panel"><div class="panel-head"><h3 id="panelTitle">Item</h3><button class="xbtn" onclick="closeAll()">✕</button></div><div class="panel-body" id="panelBody"></div></div>
+
+<!-- modal novo item -->
+<div class="modal" id="modal">
+  <div class="modal-head"><h3 id="modalTitle">Novo item</h3><button class="xbtn" onclick="closeAll()">✕</button></div>
+  <div class="modal-body"><div class="fgrid" id="formGrid"></div></div>
+  <div class="modal-foot">
+    <span id="formStatus" style="margin-right:auto;font-size:12px;color:var(--sp-sub)"></span>
+    <button class="btn-secondary" onclick="closeAll()">Cancelar</button>
+    <button class="btn-secondary" onclick="submitForm(true)">Salvar e criar outro</button>
+    <button class="btn-primary" onclick="submitForm(false)">Salvar</button>
+  </div>
+</div>
+<script>
+const KPI_BASE=[["Atacante", "Defensiva", "Evitar ou incomodar o adversário com a bola (1x1)", "Nº de pressões realizadas no 1x1"], ["Atacante", "Defensiva", "Evitar ou incomodar o adversário com a bola (1x1)", "Nº de pressões bem-sucedidas (roubo de bola ou passe forçado)"], ["Atacante", "Defensiva", "Evitar ou incomodar o adversário com a bola (1x1)", "Nº de recuperações diretas na zona ofensiva"], ["Atacante", "Defensiva", "Fechar linhas de passe do portador da bola, direcionando onde ela deve ser passada.", "Nº de recuperação pós perda"], ["Atacante", "Defensiva", "Fechar linhas de passe do portador da bola, direcionando onde ela deve ser passada.", "Nº de recuperações coletivas originadas da sua pressão"], ["Atacante", "Ofensiva", "Capacidade de controlar e desmarcar em espaços em profundidade", "Nº de desmarques de profundidade realizados"], ["Atacante", "Ofensiva", "Capacidade de controlar e desmarcar em espaços em profundidade", "Nº de bolas controladas em situações de profundidade"], ["Atacante", "Ofensiva", "Capacidade de controlar e desmarcar em espaços em profundidade", "Nº de finalizações criadas após controle em profundidade"], ["Atacante", "Ofensiva", "Sair da linha da profundidade para dar apoio ao jogo", "Nº de apoios oferecidos fora da linha de defesa"], ["Atacante", "Ofensiva", "Sair da linha da profundidade para dar apoio ao jogo", "Nº de ações de 1x1 que terminaram em finalização (chute, cabeceio.)"], ["Atacante", "Ofensiva", "Sair da linha da profundidade para dar apoio ao jogo", "Nº de jogadas progressivas iniciadas a partir do apoio"], ["Atacante", "Ofensiva", "Desmarcar na direção do gol, atacando as costas.", "Nº de corridas de ruptura em direção ao gol"], ["Atacante", "Ofensiva", "Desmarcar na direção do gol, atacando as costas.", "Nº de rupturas que resultaram em finalização"], ["Atacante", "Ofensiva", "Desmarcar na direção do gol, atacando as costas.", "Nº de gols marcados em desmarques de ruptura"], ["Atacante", "Ofensiva", "Gerar espaços para companheiros através de troca de ritmo", "Nº de jogadas em que sua movimentação gerou vantagem para companheiros"], ["Atacante", "Ofensiva", "Monitorar espaços, adversários e a bola para melhor se posicionar em situações de cruzamento.", "Nº de desmarques em área durante cruzamentos"], ["Atacante", "Ofensiva", "Monitorar espaços, adversários e a bola para melhor se posicionar em situações de cruzamento.", "Nº de finalizações em cruzamentos no alvo"], ["Atacante", "Ofensiva", "Monitorar espaços, adversários e a bola para melhor se posicionar em situações de cruzamento.", "Nº de gols marcados em jogadas de cruzamento"], ["Atacante", "Ofensiva", "Orientar o corpo entre defensores de forma a ter vantagem", "Nº de recepções entre zagueiros com domínio orientado"], ["Atacante", "Ofensiva", "Orientar o corpo entre defensores de forma a ter vantagem", "Nº de finalizações criadas a partir dessas recepções"], ["Atacante", "Ofensiva", "Orientar o corpo entre defensores de forma a ter vantagem", "Nº de faltas sofridas em zona perigosa"], ["Extremo", "Defensiva", "Equilibrar o time do lado oposto", "Nº de balanço defensivos corretos para o lado oposto"], ["Extremo", "Defensiva", "Equilibrar o time do lado oposto", "Nº de interceptações - Fechando lado oposto"], ["Extremo", "Defensiva", "Abordar o portador da bola (1x1)", "Nº de duelos defensivos 1x1 vencidos"], ["Extremo", "Defensiva", "Abordar o portador da bola (1x1)", "Nº de desarmes realizados no 1x1"], ["Extremo", "Defensiva", "Vigiar e dividir espaço com mais de um adversário", "Nº de passes adversários interceptado na sua zona"], ["Extremo", "Defensiva", "Proteger a área quando do lado oposto do cruzamento", "Nº de interceptações/rebates em cruzamentos no 2º trave"], ["Extremo", "Defensiva", "Proteger a área quando do lado oposto do cruzamento", "Nº de duelos aéreos defensivos vencidos dentro da área"], ["Extremo", "Ofensiva", "Oferecer amplitude", "Nº de recepções abertas em amplitude"], ["Extremo", "Ofensiva", "Oferecer amplitude", "Nº de jogadas progressivas iniciadas a partir da amplitude"], ["Extremo", "Ofensiva", "Orientar o corpo lateralmente para receber a bola", "Nº de jogadas criadas após recepção bem orientada"], ["Extremo", "Ofensiva", "Mudar de direção e atacar as costas", "Nº de corridas de ruptura em profundidade"], ["Extremo", "Ofensiva", "Mudar de direção e atacar as costas", "Nº de recepções em profundidade (bola recebida em vantagem)"], ["Extremo", "Ofensiva", "Mudar de direção e atacar as costas", "Nº de finalizações criadas a partir de rupturas"], ["Extremo", "Ofensiva", "Perceber as diferentes possibilidades de 1x1", "Nº de dribles tentados por jogo"], ["Extremo", "Ofensiva", "Perceber as diferentes possibilidades de 1x1", "% de dribles bem-sucedidos (ganhos)"], ["Extremo", "Ofensiva", "Perceber as diferentes possibilidades de 1x1", "Nº de vantagens criadas em 1x1 (faltas sofridas, passes após drible, finalizações.)"], ["Extremo", "Ofensiva", "Cruzamentos e finalizações no último terço do campo", "Nº de cruzamentos tentados por jogo"], ["Extremo", "Ofensiva", "Cruzamentos e finalizações no último terço do campo", "% de cruzamentos certos (encontrando companheiros)"], ["Extremo", "Ofensiva", "Cruzamentos e finalizações no último terço do campo", "Nº de finalizações no último terço (chutes + cabeceios)"], ["Extremo", "Ofensiva", "Cruzamentos e finalizações no último terço do campo", "Nº de entradas na área pelo lado oposto"], ["Lateral", "Defensiva", "Balançar junto com a linha defensiva", "Nº de ações corretas de alinhamento lateral por jogo"], ["Lateral", "Defensiva", "Balançar junto com a linha defensiva", "Nº de falhas de alinhamento (indicador negativo)"], ["Lateral", "Defensiva", "Balançar junto com a linha defensiva", "Nº de duelos defensivos em área (ganhos)"], ["Lateral", "Defensiva", "Reequilibrar a linha através de coberturas defensivas", "Nº de coberturas defensivas realizadas"], ["Lateral", "Defensiva", "Temporizar o portador da bola, não permitindo ser superado.", "Nº de duelos defensivos 1x1 vencidos"], ["Lateral", "Defensiva", "Temporizar o portador da bola, não permitindo ser superado.", "Nº de interceptações e desarmes bem-sucedidos"], ["Lateral", "Defensiva", "Temporizar o portador da bola, não permitindo ser superado.", "Nº de bolas longas adversárias controladas (sem ruptura)"], ["Lateral", "Defensiva", "Controlar a profundidade, mantendo o equilíbrio da linha.", "Nº de jogadas em que manteve cobertura equilibrada da linha"], ["Lateral", "Ofensiva", "Criar vantagem no 1x1 ou no domínio da bola", "Nº de dribles/1x1 ofensivos (ganhos)"], ["Lateral", "Ofensiva", "Criar vantagem no 1x1 ou no domínio da bola", "Nº de ações (passes/conduções) que resultaram em progressão ofensiva"], ["Lateral", "Ofensiva", "Atacar espaços no corredor lateral e movimentar em apoio constante", "Nº de ultrapassagem realizadas"], ["Lateral", "Ofensiva", "Atacar espaços no corredor lateral e movimentar em apoio constante", "Nº de apoios recebidos para dar continuidade à jogada"], ["Lateral", "Ofensiva", "Capacidade de assistências no último terço (cruzamentos)", "Nº de cruzamentos tentados por jogo"], ["Lateral", "Ofensiva", "Capacidade de assistências no último terço (cruzamentos)", "% de cruzamentos certos (nº total/certos)"], ["Lateral", "Ofensiva", "Capacidade de assistências no último terço (cruzamentos)", "Nº de chances claras criadas a partir de cruzamentos"], ["Meia", "Defensiva", "Defender a forma que atua (Zonal ou pressionando o adversário)", "Nº de pressões efetivas que resultaram em recuperação de bola"], ["Meia", "Defensiva", "Defender a forma que atua (Zonal ou pressionando o adversário)", "Nº de 1x1 com sucesso (desarme)"], ["Meia", "Defensiva", "Reduzir as opções de passe quando o portador da bola está sob pressão", "Nº de linhas de passe interceptada por jogo"], ["Meia", "Defensiva", "Reduzir as opções de passe quando o portador da bola está sob pressão", "Nº de recuperações de bola decorrentes da redução de opções"], ["Meia", "Ofensiva", "Oferecer linhas de passe entre a linha de defesa dos adversários", "Nº de passes recebidos entrelinhas sem perda de posse"], ["Meia", "Ofensiva", "Oferecer linhas de passe entre a linha de defesa dos adversários", "Nº de ações progressivas iniciadas após receber entrelinhas"], ["Meia", "Ofensiva", "Oferecer apoio de emergência quando o homem da bola estiver pressionado", "Nº de perdas de bola em passes entrelinhas (indicador negativo)"], ["Meia", "Ofensiva", "Atacar as costas, aproveitando os espaços gerados pelos atacantes.", "Nº de corridas de ruptura em profundidade por jogo"], ["Meia", "Ofensiva", "Atacar as costas, aproveitando os espaços gerados pelos atacantes.", "Nº de desmarques bem-sucedidos que resultaram em progressão/ofensiva"], ["Meia", "Ofensiva", "Atacar as costas, aproveitando os espaços gerados pelos atacantes.", "Nº de ações que terminaram criadas a partir dessas rupturas"], ["Meia", "Ofensiva", "Identificar espaços vantajosos na área e realizar desmarques para finalizar", "Nº de desmarques ofensivos dentro da área"], ["Meia", "Ofensiva", "Identificar espaços vantajosos na área e realizar desmarques para finalizar", "Nº de finalizações no gol"], ["Meia", "Ofensiva", "Identificar espaços vantajosos na área e realizar desmarques para finalizar", "Nº de gols marcados"], ["Meia", "Ofensiva", "Identificar espaços vantajosos na área e realizar desmarques para finalizar", "Nº de chances criadas a partir do passe do meia"], ["Volante", "Defensiva", "Fechar e controlar espaços interiores", "Nº de interceptações realizadas por jogo"], ["Volante", "Defensiva", "Identificar qual jogador se tem responsabilidade defensiva (1x1)", "Nº de faltas cometidas em situações de 1x1 (indicador negativo)"], ["Volante", "Defensiva", "Identificar qual jogador se tem responsabilidade defensiva (1x1)", "Nº de duelos defensivos 1x1 vencidos"], ["Volante", "Defensiva", "Proteger a linha defensiva das bolas aéreas", "Nº de disputas aéreas defensivas ganhas"], ["Volante", "Defensiva", "Proteger a linha defensiva das bolas aéreas", "Nº de segundas bolas recuperadas após disputa aérea"], ["Volante", "Defensiva", "Encaixar área caso ela esteja desequilibrada", "Nº de coberturas realizadas à frente da linha defensiva (área encaixada)"], ["Volante", "Ofensiva", "Criar linhas de passe por dentro", "Nº de apoios oferecidos em zona central"], ["Volante", "Ofensiva", "Criar linhas de passe por dentro", "Nº de recepções seguras sob pressão"], ["Volante", "Ofensiva", "Criar linhas de passe por dentro", "Nº de passes progressivos após recepção"], ["Volante", "Ofensiva", "Capacidade de gerir o ritmo do jogo (gestão do espaço)", "Nº de passes por jogo (indicador de controle de posse)"], ["Volante", "Ofensiva", "Capacidade de gerir o ritmo do jogo (gestão do espaço)", "Nº de passes certos no jogo"], ["Volante", "Ofensiva", "Capacidade de realizar passes entre linhas e assistências", "Nº de passes entrelinhas por jogo"], ["Volante", "Ofensiva", "Capacidade de realizar passes entre linhas e assistências", "Nº de passes para frente (passes certos/concluídos)"], ["Volante", "Ofensiva", "Capacidade de finalizar de média e longa distância", "Nº de finalizações de média/longa distância por jogo"], ["Volante", "Ofensiva", "Capacidade de finalizar de média e longa distância", "Nº de finalizações no alvo (acerto no gol)"], ["Volante", "Ofensiva", "Capacidade de finalizar de média e longa distância", "Nº de gols marcados de fora da área"], ["Zagueiro", "Defensiva", "Cobertura de um componente da linha", "Nº de coberturas realizadas por jogo"], ["Zagueiro", "Defensiva", "Cobertura de um componente da linha", "Nº de coberturas eficazes (total/rebatidas)"], ["Zagueiro", "Defensiva", "Controlar profundidade", "Duelos defensivos em bolas longas (ganhos)"], ["Zagueiro", "Defensiva", "Controlar profundidade", "Nº de corridas em profundidade controladas (ganhos)"], ["Zagueiro", "Defensiva", "Temporizar o portador da bola", "Nº de situações de temporização por jogo"], ["Zagueiro", "Defensiva", "Temporizar o portador da bola", "Nº de temporizações bem-sucedidas (adversário forçado a jogar para trás ou lateral)"], ["Zagueiro", "Defensiva", "Defender cruzamentos", "Nº de cruzamentos defendidos (interceptados ou afastados fora do centro de jogo) dentro da área"], ["Zagueiro", "Defensiva", "Defender cruzamentos", "Nº de gols tomados dentro da área a partir de cruzamentos"], ["Zagueiro", "Defensiva", "Defender cruzamentos", "Nº de cruzamentos e finalizações bloqueadas"], ["Zagueiro", "Defensiva", "Defesa de 1x1", "Nº de 1x1 efetivos (ganhos)"], ["Zagueiro", "Ofensiva", "Conduzir para atrair um oponente", "Nº de conduções que atraíram o marcador (após a condução, adversário saiu da linha.)"], ["Zagueiro", "Ofensiva", "Conduzir para atrair um oponente", "Perdas de posse durante conduções (nº de conduções com erro)"], ["Zagueiro", "Ofensiva", "Identificar o homem livre com passes curtos e longos", "Nº de passes que quebraram linhas por jogo"], ["Zagueiro", "Ofensiva", "Identificar o homem livre com passes curtos e longos", "Nº passes longos completos"], ["Zagueiro", "Ofensiva", "Oferecer linhas de passe para o homem da bola", "Nº de apoios oferecidos por jogo (situações em que se apresenta para receber)"], ["Zagueiro", "Ofensiva", "Oferecer linhas de passe para o homem da bola", "Nº de recepções seguras (sem perder a posse após receber)"], ["Zagueiro", "Ofensiva", "Atacar marcando", "Nº de bolas controladas pelos atacantes adversário em transições de posse de bola"], ["Zagueiro", "Ofensiva", "Atacar marcando", "Nº de bolas que o adversário conseguiu girar de frente em transição de posse de bola"]];
+const OPT={"tecnicas": ["Abordagem", "Antecipação", "Atacar as costas", "Bloqueio", "Cabeceio defensivo", "Cabeceio ofensivo", "Conduzir a bola", "Correr com a bola", "Cruzamento", "Defesa de 1x1", "Desarme", "Domínio orientado", "Drible", "Finalização", "Interceptação", "Movimento de pescoço", "Nenhuma tática", "Orientação corporal", "Passe", "Perseguição", "Proteção de bola", "Rebatida", "Retorno defensivo", "Sem bola - Atacar marcando", "Sem bola - Desmarque", "Sem bola - Linha de passe", "Troca de ritmo"], "freqSemana": ["1ª da semana", "2ª da semana", "3ª da semana", "4ª da semana"], "videoDesc": ["Vídeo de jogo", "Vídeo de PDI", "Vídeo de treino", "Vídeo de uma equipe de alto nível"], "justOcorr": ["Não comparecimento injustificado", "Não comparecimento justificado (Departamento médico)", "Não comparecimento justificado (Jogo)", "Não comparecimento justificado (Viagem)"], "proxPasso": ["Comunicação comissão técnica", "Comunicação coordenação", "Comunicação performance"], "freqTreino": ["1x NA SEMANA", "2X NA SEMANA", "3X NA SEMANA", "4X NA SEMANA"], "fisObj": ["Aumentar a agilidade", "Aumentar a força (membros inferiores)", "Aumentar a força (membros superiores)", "Aumentar aceleração 30M", "Aumentar arranque 10M", "Diminuir percentual de gordura", "Melhorar coordenação/técnica de corrida"], "fisInterv": ["Treino aeróbico", "Treino coordenação/técnica de corrida", "Treino de aceleração 30M", "Treino de agilidade", "Treino de arranque 10M", "Treino de força (membros inferiores)", "Treino de força (membros superiores)"], "fisPlano": ["Feedback comissão técnica", "Feedback performance", "Seguir em acompanhamento"], "nutObj": ["Acelerar recuperação pós-treino/jogo", "Aumentar massa magra (hipertrofia)", "Corrigir deficiências de micronutrientes", "Desenvolver autonomia alimentar", "Ganhar massa corporal total (casos específicos)", "Manter composição corporal ideal", "Melhorar saúde intestinal", "Otimizar disponibilidade energética e performance", "Recomposição corporal (uso criterioso)", "Reduzir % de gordura (manter/ganhar massa magra)", "Suporte nutricional RTP (lesão)"], "nutPlano": ["Alta proteína para síntese tecidual + suplementos", "Aumento de fibras e hidratação", "Déficit calórico moderado", "Déficit leve com proteína elevada e periodização", "Dieta isocalórica com proteína moderada-alta", "Educação nutricional, sistema P/M/G", "Nutrição pós-treino, proteína + carboidrato", "Periodização de carboidratos por microciclo", "Superávit calórico controlado + suplementos", "Superávit calórico elevado + alta proteína", "Suplementação guiada por exames"], "psiObj": ["Contribuir com a adesão nutricional", "Contribuir com adesão ao tratamento médico", "Contribuir para gestão de estresse", "Controlar ansiedade", "Desenvolver gestão de expectativas", "Desenvolver habilidades sociais", "Desenvolver senso de responsabilidade", "Manter conduta comportamental", "Melhorar cognição"], "psiPlano": ["Feedback comissão técnica", "Feedback multidisciplinar", "Observação direta em treinos e jogos", "Seguir em acompanhamento"], "ssObj": ["Desenvolver conduta escolar", "Diagnosticar realidade social", "Identificar rede de apoio", "Intervir na rede de apoio (Amigos, família e comunidade.)", "Manter conduta comportamental", "Manter desempenho escolar", "Não se aplica"], "ssPlano": ["Feedback comissão técnica", "Feedback multidisciplinar", "Não se aplica", "Observação direta em treinos e jogos", "Seguir em acompanhamento", "Visita na escola"], "freqAreas": ["1x a cada 2 semanas", "1x por semana", "2x por semana", "3x por semana", "4x por semana", "Diária", "Não se aplica", "Ocasional", "Pontual"]};
+/* ================= DADOS-BASE (compartilhados com o Cadastro Central) ================= */
+const POSICOES=["Atacante","Extremo","Lateral","Meia","Volante","Zagueiro"];
+const HOJE="09/11/2026";
+const COMPETENCIAS=["05/2026","06/2026","07/2026","08/2026","09/2026","10/2026","11/2026","12/2026"];
+const OPEN_COMPS=new Set(["11/2026"]);   // competência aberta pela Controladoria
+const USUARIO="Leonardo V.";
+const ATLETAS=[
+ {id:"BFC-SUB15-0007",nome:"Brayan Bismark",cat:"Sub-15",posicao:"Meia",freq:"3X NA SEMANA",real:true,
+  obj:["Oferecer linhas de passe entre a linha de defesa dos adversários","Defender a forma que atua (Zonal ou pressionando o adversário)","Reduzir as opções de passe quando o portador da bola está sob pressão"]},
+ {id:"BFC-SUB17-0012",nome:"Kaique Andrade",cat:"Sub-17",posicao:"Zagueiro",freq:"3X NA SEMANA",real:false,
+  obj:["Temporizar o portador da bola","Defender cruzamentos","Controlar profundidade","Identificar o homem livre com passes curtos e longos"]},
+ {id:"BFC-SUB20-0004",nome:"Rafael Nunes",cat:"Sub-20",posicao:"Lateral",freq:"4X NA SEMANA",real:false,
+  obj:["Atacar espaços no corredor lateral e movimentar em apoio constante","Temporizar o portador da bola, não permitindo ser superado.","Criar vantagem no 1x1 ou no domínio da bola"]},
+ {id:"BFC-SUB15-0015",nome:"Enzo Ferreira",cat:"Sub-15",posicao:"Atacante",freq:"2X NA SEMANA",real:false,
+  obj:["Sair da linha da profundidade para dar apoio ao jogo","Desmarcar na direção do gol, atacando as costas.","Evitar ou incomodar o adversário com a bola (1x1)"]},
+];
+const atl=id=>ATLETAS.find(a=>a.id===id);
+const faseOf=(pos,comp)=>{const r=KPI_BASE.find(k=>k[0]===pos&&k[2]===comp);return r?r[1]:""};
+const kpisOf=(pos,comp)=>KPI_BASE.filter(k=>k[0]===pos&&k[2]===comp).map(k=>k[3]);
+const comportsOf=(pos,fase)=>[...new Set(KPI_BASE.filter(k=>k[0]===pos&&(!fase||k[1]===fase)).map(k=>k[2]))];
+
+/* ================= REGISTROS (22 itens do protótipo anterior; valores numéricos preservados) ================= */
+const RESP="Comissão Técnica (e-mail compartilhado)";
+function R(id,at,data,tipo,o){return Object.assign({id,atleta:at,data,tipo,fase:"",comportamento:"",kpi:"",tecnica:"",freq:"",rep:null,ac:null,er:null,desc:"",just:"",prox:"",resp:RESP,criado:data+" 18:00"},o)}
+const B="BFC-SUB15-0007",K="BFC-SUB17-0012",RF="BFC-SUB20-0004",E="BFC-SUB15-0015";
+const T=(id,at,data,comp,kpi,freq,rep,ac,er)=>R(id,at,data,"Intervenção Tática",{fase:faseOf(atl(at).posicao,comp),comportamento:comp,kpi,freq,rep,ac,er});
+const TC=(id,at,data,tec,freq,rep,ac,er)=>R(id,at,data,"Intervenção Técnica",{tecnica:tec,freq,rep,ac,er});
+const V=(id,at,data,desc,freq)=>R(id,at,data,"Intervenção Vídeo",{desc,freq});
+const O=(id,at,data,just)=>R(id,at,data,"Ocorrência",{just});
+let ROWS=[
+ T("TT-001",B,"26/05/2026","Oferecer linhas de passe entre a linha de defesa dos adversários","Nº de passes recebidos entrelinhas sem perda de posse","1ª da semana",20,7,13),
+ TC("TT-002",B,"22/05/2026","Finalização","1ª da semana",30,16,14),
+ TC("TT-003",B,"26/05/2026","Passe","1ª da semana",20,7,13),
+ TC("TT-004",B,"26/05/2026","Sem bola - Desmarque","1ª da semana",20,7,13),
+ V("TT-005",B,"12/05/2026","Vídeo de uma equipe de alto nível","1ª da semana"),
+ V("TT-006",B,"15/05/2026","Vídeo de jogo","2ª da semana"),
+ O("TT-007",B,"19/05/2026","Não comparecimento justificado (Viagem)"),
+ T("TT-008",K,"03/05/2026","Temporizar o portador da bola","Nº de situações de temporização por jogo","1ª da semana",25,14,11),
+ TC("TT-009",K,"10/05/2026","Cruzamento","2ª da semana",20,12,8),
+ T("TT-010",K,"17/05/2026","Defender cruzamentos","Nº de cruzamentos e finalizações bloqueadas","3ª da semana",15,9,6),
+ TC("TT-011",K,"24/05/2026","Domínio orientado","4ª da semana",25,15,10),
+ O("TT-012",K,"31/05/2026","Não comparecimento justificado (Jogo)"),
+ TC("TT-013",RF,"04/05/2026","Domínio orientado","1ª da semana",25,15,10),
+ T("TT-014",RF,"11/05/2026","Atacar espaços no corredor lateral e movimentar em apoio constante","Nº de ultrapassagem realizadas","2ª da semana",20,7,13),
+ TC("TT-015",RF,"18/05/2026","Desarme","3ª da semana",30,17,13),
+ T("TT-016",RF,"25/05/2026","Temporizar o portador da bola, não permitindo ser superado.","Nº de duelos defensivos 1x1 vencidos","4ª da semana",20,10,10),
+ V("TT-017",RF,"01/06/2026","Vídeo de PDI","1ª da semana"),
+ TC("TT-018",E,"05/05/2026","Desarme","1ª da semana",30,19,11),
+ T("TT-019",E,"12/05/2026","Sair da linha da profundidade para dar apoio ao jogo","Nº de apoios oferecidos fora da linha de defesa","2ª da semana",20,9,11),
+ TC("TT-020",E,"19/05/2026","Finalização","3ª da semana",25,17,8),
+ T("TT-021",E,"26/05/2026","Desmarcar na direção do gol, atacando as costas.","Nº de corridas de ruptura em direção ao gol","4ª da semana",20,13,7),
+ V("TT-022",E,"02/06/2026","Vídeo de treino","1ª da semana"),
+];
+/* KPIs de Jogo — valores do KPI são SIMULADOS; jogo/minutos/nível vêm do protótipo da Controladoria */
+let JOGOS=[
+ {id:"KJ-001",atleta:K,fase:"Defensiva",comportamento:"Temporizar o portador da bola",kpi:"Nº de temporizações bem-sucedidas (adversário forçado a jogar para trás ou lateral)",jogo:"Jogo 1",min:20,nivel:"Jogo nível B",valor:3,data:"07/06/2026",resp:RESP},
+ {id:"KJ-002",atleta:K,fase:"Ofensiva",comportamento:"Identificar o homem livre com passes curtos e longos",kpi:"Nº passes longos completos",jogo:"Jogo 2",min:25,nivel:"Jogo nível A",valor:4,data:"14/06/2026",resp:RESP},
+ {id:"KJ-003",atleta:RF,fase:"Defensiva",comportamento:"Temporizar o portador da bola, não permitindo ser superado.",kpi:"Nº de interceptações e desarmes bem-sucedidos",jogo:"Jogo 1",min:30,nivel:"Jogo nível C",valor:5,data:"07/06/2026",resp:RESP},
+ {id:"KJ-004",atleta:RF,fase:"Ofensiva",comportamento:"Atacar espaços no corredor lateral e movimentar em apoio constante",kpi:"Nº de ultrapassagem realizadas",jogo:"Jogo 2",min:15,nivel:"Jogo nível B",valor:2,data:"14/06/2026",resp:RESP},
+ {id:"KJ-005",atleta:E,fase:"Ofensiva",comportamento:"Desmarcar na direção do gol, atacando as costas.",kpi:"Nº de rupturas que resultaram em finalização",jogo:"Jogo 1",min:35,nivel:"Jogo nível A",valor:3,data:"07/06/2026",resp:RESP},
+ {id:"KJ-006",atleta:E,fase:"Defensiva",comportamento:"Evitar ou incomodar o adversário com a bola (1x1)",kpi:"Nº de pressões bem-sucedidas (roubo de bola ou passe forçado)",jogo:"Jogo 2",min:20,nivel:"Jogo nível B",valor:4,data:"14/06/2026",resp:RESP},
+];
+let TRASH=[];
+let LOG=[];
+ROWS.forEach(r=>LOG.push({quando:r.criado,usuario:r.resp,item:r.id,campo:"(item)",de:"",para:"Criado"}));
+JOGOS.forEach(r=>LOG.push({quando:r.data+" 20:00",usuario:r.resp,item:r.id,campo:"(item)",de:"",para:"Criado"}));
+const FECHADAS_LOG=[["30/06/2026 23:59","Controladoria","COMP-06/2026","Competência","Aberta","Fechada"],["31/10/2026 23:59","Controladoria","COMP-10/2026","Competência","Aberta","Fechada"]];
+FECHADAS_LOG.forEach(l=>LOG.push({quando:l[0],usuario:l[1],item:l[2],campo:l[3],de:l[4],para:l[5]}));
+
+/* ================= HELPERS ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const fPct=v=>v==null||isNaN(v)?"—":(v*100).toFixed(1).replace(".",",")+"%";
+const fN=v=>v==null?"—":(+v).toLocaleString("pt-BR");
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const compOf=d=>d.slice(3);
+const compKey=c=>{const[m,y]=c.split("/").map(Number);return y*100+m};
+const dKey=d=>{const[a,m,y]=d.split("/").map(Number);return y*10000+m*100+a};
+const isoToBr=s=>s.split("-").reverse().join("/");
+const brToIso=s=>s.split("/").reverse().join("-");
+function compStatus(c){if(OPEN_COMPS.has(c))return"aberta";if(!OPEN_COMPS.size)return"fechada";const maxOpen=Math.max(...[...OPEN_COMPS].map(compKey));return compKey(c)>maxOpen?"futura":"fechada"}
+const nowStamp=()=>HOJE+" "+new Date().toTimeString().slice(0,5);
+const pctRow=r=>r.rep>0?r.ac/r.rep:null;
+const isInterv=r=>r.tipo==="Intervenção Tática"||r.tipo==="Intervenção Técnica";
+function agg(rs){const x=rs.filter(r=>r.rep>0);const rep=x.reduce((s,r)=>s+r.rep,0),ac=x.reduce((s,r)=>s+r.ac,0),er=x.reduce((s,r)=>s+r.er,0);return{rep,ac,er,pct:rep?ac/rep:null,n:x.length}}
+function semaforo(p){if(p==null)return["b-cinza","s/ dado"];return p>=0.55?["b-verde","Positivo"]:p>=0.40?["b-amarelo","Mediano"]:["b-vermelho","Negativo"]}
+const SEM_COR=p=>p==null?"#B0B7C0":p>=0.55?"#2E7D32":p>=0.40?"#C9A100":"#C62828";
+function toast(msg,err){const t=$("#toast");t.textContent=msg;t.className="toast on"+(err?" err":"");clearTimeout(toast._t);toast._t=setTimeout(()=>t.className="toast",3400)}
+const pillTipo=t=>({"Intervenção Tática":"pill-def","Intervenção Técnica":"pill-of","Intervenção Vídeo":"pill-video"}[t]||"pill-ocorr");
+const fase_pill=f=>f==="Ofensiva"?"pill-of":f==="Defensiva"?"pill-def":"pill-gray";
+function cellOf(r){return r.comportamento||r.tecnica||r.desc||r.just||""}
+const CORES=["#0B4FA2","#F2C100","#3A78C2","#2E7D32","#C62828","#7A5AA8","#00897B"];
+const corAtleta=id=>CORES[ATLETAS.findIndex(a=>a.id===id)%CORES.length];
+
+/* ================= TOOLTIP + CANVAS ================= */
+const TIP=$("#tooltip");
+function showTip(ev,lines){TIP.innerHTML=lines.join("<br>");TIP.style.display="block";TIP.style.left=(ev.clientX+14)+"px";TIP.style.top=(ev.clientY-10)+"px"}
+function hideTip(){TIP.style.display="none"}
+function setupCanvas(c,h){const dpr=window.devicePixelRatio||1;const W=c.offsetWidth||300,H=h||c.offsetHeight||240;c.style.height=H+"px";c.width=W*dpr;c.height=H*dpr;const ctx=c.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);return{ctx,W,H}}
+function hookTips(c,tips,fmt){c.onmousemove=ev=>{const r=c.getBoundingClientRect();const mx=ev.clientX-r.left,my=ev.clientY-r.top;const hit=tips.find(t=>mx>=t.x&&mx<=t.x+t.w&&my>=t.y&&my<=t.y+t.h);if(hit)showTip(ev,fmt(hit));else hideTip()};c.onmouseleave=hideTip}
+function grid(ctx,PAD,cW,cH,maxV,minV,pct){ctx.strokeStyle="#e3ebf5";ctx.lineWidth=1;ctx.fillStyle="#7a8ba0";ctx.font="11px Segoe UI,Arial";ctx.textAlign="right";for(let i=0;i<=5;i++){const v=minV+(maxV-minV)*i/5;const y=PAD.top+cH-(v-minV)/(maxV-minV)*cH;ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cW,y);ctx.stroke();ctx.fillText(pct?Math.round(v*100)+"%":(Math.abs(v)>=10?Math.round(v):v.toFixed(1)),PAD.left-6,y+4)}}
+function noData(c,msg){const{ctx,W,H}=setupCanvas(c,c.offsetHeight||200);ctx.fillStyle="#7a8ba0";ctx.font="13px Segoe UI";ctx.textAlign="center";ctx.fillText(msg||"Sem dados para o filtro",W/2,H/2);c.onmousemove=null}
+function drawGrouped(c,labels,series,o={}){
+  if(!labels.length)return noData(c);
+  const{ctx,W,H}=setupCanvas(c,o.h);const PAD={top:18,right:16,bottom:40,left:o.pct?46:36};const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  const maxV=o.pct?1:Math.max(1,...series.flatMap(s=>s.data.map(v=>v||0)))*1.15;grid(ctx,PAD,cW,cH,maxV,0,o.pct);
+  const gW=cW/labels.length,bw=Math.min(gW*0.7/series.length,36),tips=[];
+  labels.forEach((lb,i)=>{const start=PAD.left+i*gW+(gW-bw*series.length)/2;
+    series.forEach((s,j)=>{const v=s.data[i];if(v==null)return;const bh=v/maxV*cH,x=start+j*bw,y=PAD.top+cH-bh;ctx.fillStyle=s.color;ctx.beginPath();ctx.roundRect(x,y,bw-2,bh,[3,3,0,0]);ctx.fill();tips.push({x,y,w:bw,h:bh,cat:lb,label:s.label,val:v});
+      ctx.fillStyle="#163028";ctx.font="bold 10px Segoe UI";ctx.textAlign="center";ctx.fillText(o.pct?fPct(v):fN(v),x+bw/2-1,y-4)});
+    ctx.fillStyle="#163028";ctx.font="bold 10.5px Segoe UI";ctx.textAlign="center";ctx.fillText(lb,PAD.left+i*gW+gW/2,H-PAD.bottom+16)});
+  hookTips(c,tips,t=>[`<b>${esc(t.cat)}</b>`,`${esc(t.label)}: <b>${o.pct?fPct(t.val):fN(t.val)}</b>`])}
+function drawStacked(c,labels,series,o={}){
+  if(!labels.length)return noData(c);
+  const{ctx,W,H}=setupCanvas(c,o.h);const PAD={top:18,right:16,bottom:40,left:40};const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  const tot=labels.map((_,i)=>series.reduce((s,x)=>s+(x.data[i]||0),0));const maxV=Math.max(1,...tot)*1.12;grid(ctx,PAD,cW,cH,maxV,0);
+  const gW=cW/labels.length,bw=Math.min(gW*0.5,48),tips=[];
+  labels.forEach((lb,i)=>{let acc=0;const x=PAD.left+i*gW+(gW-bw)/2;series.forEach(s=>{const v=s.data[i]||0,bh=v/maxV*cH,y=PAD.top+cH-acc-bh;ctx.fillStyle=s.color;ctx.fillRect(x,y,bw,bh);tips.push({x,y,w:bw,h:bh,cat:lb,label:s.label,val:v});if(bh>16){ctx.fillStyle="#fff";ctx.font="bold 10px Segoe UI";ctx.textAlign="center";ctx.fillText(v,x+bw/2,y+bh/2+4)}acc+=bh});
+    ctx.fillStyle="#163028";ctx.font="bold 10.5px Segoe UI";ctx.textAlign="center";ctx.fillText(lb,PAD.left+i*gW+gW/2,H-PAD.bottom+16)});
+  hookTips(c,tips,t=>[`<b>${esc(t.cat)}</b>`,`${esc(t.label)}: <b>${t.val}</b>`])}
+function drawLine(c,labels,series,o={}){
+  if(!labels.length)return noData(c);
+  const{ctx,W,H}=setupCanvas(c,o.h);const PAD={top:18,right:16,bottom:44,left:o.pct?46:36};const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  grid(ctx,PAD,cW,cH,1,0,true);const stepX=labels.length>1?cW/(labels.length-1):0,tips=[];
+  series.forEach(s=>{ctx.strokeStyle=s.color;ctx.lineWidth=2.4;ctx.beginPath();let first=true;s.data.forEach((v,i)=>{if(v==null)return;const x=PAD.left+(labels.length>1?i*stepX:cW/2),y=PAD.top+cH-v*cH;if(first){ctx.moveTo(x,y);first=false}else ctx.lineTo(x,y)});ctx.stroke();
+    s.data.forEach((v,i)=>{if(v==null)return;const x=PAD.left+(labels.length>1?i*stepX:cW/2),y=PAD.top+cH-v*cH;ctx.beginPath();ctx.arc(x,y,4,0,7);ctx.fillStyle=s.color;ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();tips.push({x:x-7,y:y-7,w:14,h:14,cat:labels[i],label:s.label,val:v})})});
+  ctx.fillStyle="#163028";ctx.font="10px Segoe UI";ctx.textAlign="center";const every=Math.ceil(labels.length/Math.max(1,Math.floor(cW/48)));labels.forEach((lb,i)=>{if(i%every===0)ctx.fillText(lb,PAD.left+(labels.length>1?i*stepX:cW/2),H-PAD.bottom+16)});
+  hookTips(c,tips,t=>[`<b>${esc(t.label)}</b>`,`${esc(t.cat)}: <b>${fPct(t.val)}</b>`])}
+function drawDonut(c,labels,values,colors,o={}){
+  const tot=values.reduce((a,b)=>a+b,0);if(!tot)return noData(c);
+  const{ctx,W,H}=setupCanvas(c,o.h);const cx=W*0.36,cy=H/2,R=Math.min(cx-10,H/2-10),r=R*0.58;let a=-Math.PI/2;const segs=[];
+  values.forEach((v,i)=>{const da=v/tot*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,R,a,a+da);ctx.arc(cx,cy,r,a+da,a,true);ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();segs.push({a0:a,a1:a+da,i});a+=da});
+  ctx.fillStyle="#083B7A";ctx.font="bold 22px Segoe UI";ctx.textAlign="center";ctx.fillText(tot,cx,cy+4);ctx.font="10px Segoe UI";ctx.fillStyle="#7a8ba0";ctx.fillText("registros",cx,cy+18);
+  ctx.textAlign="left";ctx.font="12px Segoe UI";labels.forEach((lb,i)=>{const y=cy-labels.length*11+i*24+8;ctx.fillStyle=colors[i];ctx.fillRect(W*0.36+R+22,y-9,11,11);ctx.fillStyle="#163028";ctx.fillText(`${lb} (${values[i]})`,W*0.36+R+38,y)});
+  c.onmousemove=ev=>{const b=c.getBoundingClientRect(),mx=ev.clientX-b.left-cx,my=ev.clientY-b.top-cy,d=Math.hypot(mx,my);if(d<r||d>R)return hideTip();let ang=Math.atan2(my,mx);if(ang<-Math.PI/2)ang+=Math.PI*2;const s=segs.find(s=>ang>=s.a0&&ang<s.a1);if(s)showTip(ev,[`<b>${esc(labels[s.i])}</b>`,`${values[s.i]} (${(values[s.i]/tot*100).toFixed(0)}%)`]);else hideTip()};c.onmouseleave=hideTip}
+function drawHBar(c,labels,values,colors,o={}){
+  if(!labels.length)return noData(c);
+  const rowH=26,h=Math.max(120,labels.length*rowH+30);const{ctx,W,H}=setupCanvas(c,h);const L=Math.min(W*0.46,260),PAD={top:8,right:54,bottom:20,left:L};const cW=W-PAD.left-PAD.right;const maxV=o.pct?1:Math.max(...values)*1.1||1;const tips=[];
+  ctx.strokeStyle="#e3ebf5";ctx.fillStyle="#7a8ba0";ctx.font="10px Segoe UI";ctx.textAlign="center";for(let i=0;i<=4;i++){const x=PAD.left+cW*i/4;ctx.beginPath();ctx.moveTo(x,PAD.top);ctx.lineTo(x,H-PAD.bottom);ctx.stroke();ctx.fillText(o.pct?Math.round(maxV*i/4*100)+"%":(maxV*i/4).toFixed(0),x,H-6)}
+  labels.forEach((lb,i)=>{const y=PAD.top+i*rowH+3,bw=values[i]/maxV*cW;ctx.fillStyle=colors[i];ctx.beginPath();ctx.roundRect(PAD.left,y,Math.max(bw,2),rowH-8,[0,3,3,0]);ctx.fill();tips.push({x:PAD.left,y,w:Math.max(bw,4),h:rowH-8,cat:lb,val:values[i],extra:o.extra&&o.extra[i]});
+    ctx.fillStyle="#163028";ctx.font="11px Segoe UI";ctx.textAlign="right";let t=lb;if(ctx.measureText(t).width>L-14){while(ctx.measureText(t+"…").width>L-14&&t.length>4)t=t.slice(0,-1);t+="…"}ctx.fillText(t,PAD.left-8,y+(rowH-8)/2+4);
+    ctx.textAlign="left";ctx.font="bold 11px Segoe UI";ctx.fillText(o.pct?fPct(values[i]):fN(values[i]),PAD.left+bw+6,y+(rowH-8)/2+4)});
+  hookTips(c,tips,t=>[`<b>${esc(t.cat)}</b>`,o.pct?fPct(t.val):fN(t.val)].concat(t.extra?[t.extra]:[]))}
+
+/* ================= UI BÁSICA ================= */
+function closeAll(){$("#ov").classList.remove("on");$("#panel").classList.remove("on");$("#modal").classList.remove("on")}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAll()});
+/* ================= NAVEGAÇÃO ================= */
+const TOP=[["home","Página Inicial"],["lista","Lista - Tático Técnico"],["docs","Documentos"],["cadastro","Cadastro Central do Atleta"],["notas","Bloco de Anotações"]];
+const TOP_GROUP={home:"home",lista:"lista",base:"lista",kpisjogo:"lista",dashboard:"lista",docs:"docs",cadastro:"cadastro",notas:"notas"};
+const LEFT=[
+ ["Tático Técnico",[["home","Página Inicial","#0078D4"],["lista","Lista - Tático Técnico","#0078D4"],["dashboard","Painel de KPIs","#0B4FA2"],["kpisjogo","KPIs de Jogo","#0B4FA2"],["base","Base de Dados (Opções)","#8A8886"],["docs","Documentos","#8A8886"],["notas","Bloco de Anotações","#8A8886"]]],
+ ["Outras Áreas",[["cadastro","Cadastro Central","#C7C6C4"],["fisico","Físico","#C7C6C4","🔒 indicador"],["nutricao","Nutrição","#C7C6C4","🔒"],["social","Serviço Social","#C7C6C4","🔒"],["psico","Psicologia","#C7C6C4","🔒"]]],
+ ["Conteúdo do Site",[["lixeira","🗑️ Lixeira"],["config","⚙️ Configurações do site"]]],
+];
+let PAGE="home";
+function renderNav(){
+  $("#topnav").innerHTML=TOP.map(([k,l])=>`<a class="${TOP_GROUP[PAGE]===k?"active":""}" onclick="go('${k}')">${l}</a>`).join("")+`<a onclick="toast('Protótipo: no SharePoint real, aqui se cria uma nova página.')">+</a>`;
+  $("#leftnav").innerHTML=LEFT.map(([sec,items])=>`<div class="section-lbl" style="margin-top:${sec==="Tático Técnico"?0:14}px">${sec}</div>`+items.map(it=>{
+    const dot=it[2]?`<span class="dot" style="background:${it[2]}"></span>`:"";
+    const cnt=it[0]==="lixeira"&&TRASH.length?`<span class="badge-count" style="margin-left:auto">${TRASH.length}</span>`:"";
+    return `<a class="${PAGE===it[0]?"active":""}" onclick="go('${it[0]}')">${dot}${it[1]}${it[3]?`<span class="lock">${it[3]}</span>`:""}${cnt}</a>`}).join("")).join("");
+}
+function go(p){PAGE=p;closeAll();if(location.hash!=="#"+p)history.replaceState(null,"","#"+p);renderNav();renderPage();window.scrollTo(0,0)}
+function renderPage(){const fn=PAGES[PAGE]||PAGES.home;$("#content").innerHTML="";fn(); if(PAGE==="dashboard")drawDash()}
+let PAGES={};
+
+/* ================= PÁGINA INICIAL ================= */
+function ativosRows(){return ROWS}
+function kpiStripHtml(){
+  const iv=agg(ROWS.filter(isInterv)),tat=agg(ROWS.filter(r=>r.tipo==="Intervenção Tática")),tec=agg(ROWS.filter(r=>r.tipo==="Intervenção Técnica"));
+  const oc=ROWS.filter(r=>r.tipo==="Ocorrência"),inj=oc.filter(r=>r.just.includes("injustificado")).length;
+  const refs=new Set(ROWS.map(r=>r.atleta)).size;
+  const compA=[...OPEN_COMPS][0]||"—";const ativos=new Set(ROWS.filter(r=>compOf(r.data)===compA).map(r=>r.atleta)).size;
+  const items=[["Registros na Lista",ROWS.length,`${TRASH.length} na lixeira`],["Atletas Referenciados",refs,`de ${ATLETAS.length} no cadastro`],["% Aproveitamento (ponderado)",fPct(iv.pct),`${iv.ac} acertos ÷ ${iv.rep} rep.`],["% Tático · % Técnico",fPct(tat.pct)+" · "+fPct(tec.pct),"intervenções com contagem"],["Ocorrências",oc.length,inj?`${inj} injustificada(s)`:"todas justificadas"],["Cobertura "+compA,`${ativos}/${ATLETAS.length}`,"atletas com registro na competência aberta"]];
+  return `<div class="kpi-strip">${items.map(i=>`<div class="kpi"><div class="lbl">${i[0]}</div><div class="val">${i[1]}</div><div class="sub">${i[2]}</div></div>`).join("")}</div>`}
+
+PAGES.home=function(){
+  const compA=[...OPEN_COMPS][0]||"—";const feitos=new Set(ROWS.filter(r=>compOf(r.data)===compA).map(r=>r.atleta));
+  const pend=ATLETAS.filter(a=>!feitos.has(a.id));
+  const feed=LOG.slice().sort((a,b)=>dKey(b.quando.slice(0,10))-dKey(a.quando.slice(0,10))||(b.quando>a.quando?1:-1)).slice(0,6);
+  $("#content").innerHTML=`
+  <div class="hero"><h2>Tático Técnico · Comissão Técnica</h2><p>Cadastro e acompanhamento das intervenções táticas e técnicas, vídeos, ocorrências e KPIs de jogo de cada atleta — sempre a partir dos objetivos definidos no Cadastro Central.</p></div>
+  <div class="qlinks">
+    <div class="qlink" onclick="openForm('lista')"><b>➕ Nova intervenção</b><span>Formulário padrão com opções por posição e validação de contagens</span></div>
+    <div class="qlink" onclick="go('dashboard')"><b>📊 Painel de KPIs</b><span>Aproveitamento, fundamentos a reforçar e radar de preenchimento</span></div>
+    <div class="qlink" onclick="go('kpisjogo')"><b>🏟️ KPIs de Jogo</b><span>Indicadores por jogo, minutos e nível de jogo</span></div>
+    <div class="qlink" onclick="go('cadastro')"><b>🧾 Cadastro Central</b><span>Ficha do atleta, objetivos e KPIs por posição</span></div>
+  </div>
+  <div class="webpart"><div class="webpart-head"><div><h2>Resumo da equipe</h2><div class="sub">Indicadores calculados a partir da lista (atualizam a cada novo item)</div></div></div>${kpiStripHtml()}</div>
+  <div class="grid2">
+    <div>
+      <div class="webpart"><div class="webpart-head"><div><h2>Competência ${compA} · aberta</h2><div class="sub">Pendências desta semana — atletas sem nenhum registro na competência</div></div><button class="btn-primary" onclick="openForm('lista')">+ Novo item</button></div>
+        <div class="wp-body"><div class="progress"><div style="width:${feitos.size/ATLETAS.length*100}%"></div></div><div class="note" style="margin:6px 0 12px">${feitos.size} de ${ATLETAS.length} atletas com registro · fechamento mensal pela Controladoria</div>
+        ${pend.length?pend.map(a=>`<div class="feed-item"><span class="pill pill-warn">Pendente</span> <b>${a.nome}</b> · ${a.cat} · ${a.posicao}<small>${a.obj.length} objetivos definidos · frequência ${a.freq}</small></div>`).join(""):`<div class="infobox good" style="grid-column:auto">Todos os atletas já têm registro nesta competência.</div>`}</div></div>
+      <div class="webpart"><div class="webpart-head"><div><h2>Atividade recente</h2><div class="sub">Trilha de alterações: usuário, campo, data e hora</div></div></div><div class="wp-body">${feed.map(l=>`<div class="feed-item"><b>${esc(l.item)}</b> · ${esc(l.campo)} ${l.de?`${esc(l.de)} → `:"→ "}<b>${esc(l.para)}</b><small>${esc(l.usuario)} · ${esc(l.quando)}</small></div>`).join("")}</div></div>
+    </div>
+    <div>
+      <div class="webpart"><div class="webpart-head"><div><h2>Regras de preenchimento</h2><div class="sub">Validadas automaticamente no formulário</div></div></div><div class="wp-body">
+        <div class="rule"><i>✔</i><span>Campos obrigatórios bloqueiam o registro.</span></div>
+        <div class="rule"><i>✔</i><span>Contagem tem que fechar: 20 repetições com 10 acertos e 11 erros <b>não fecham</b>.</span></div>
+        <div class="rule"><i>✔</i><span>Registro apenas no mês de competência aberto pela Controladoria.</span></div>
+        <div class="rule"><i>✔</i><span>Intervenções só dos objetivos definidos na ficha do atleta.</span></div>
+        <div class="rule"><i>✔</i><span>Responsável identificado em cada registro e trilha de alterações.</span></div></div></div>
+      <div class="webpart"><div class="webpart-head"><h2>Equipe do site</h2></div><div class="wp-body">
+        <div class="feed-item"><span class="avatar" style="display:inline-flex;vertical-align:middle;margin-right:8px">LV</span>Leonardo V. <small>Proprietário · KLIT Integradora de T.I. (conta de demonstração)</small></div>
+        <div class="feed-item"><span class="avatar" style="display:inline-flex;vertical-align:middle;margin-right:8px;background:#BDD7EE">CT</span>Comissão Técnica <small>Membros · edita Tático Técnico</small></div>
+        <div class="feed-item"><span class="avatar" style="display:inline-flex;vertical-align:middle;margin-right:8px;background:#CFE0F5">CO</span>Controladoria <small>Visão total · fechamento mensal</small></div></div></div>
+    </div>
+  </div>`;
+};
+
+/* ================= LISTA ================= */
+const UI={q:"",tipo:"",atl:"",comp:"",sort:{k:"id",d:1}};
+const COLS=[["id","ID",r=>r.id],["atleta","Atleta",r=>atl(r.atleta).nome],["data","Data",r=>dKey(r.data)],["comp","Comp.",r=>compKey(compOf(r.data))],["tipo","Tipo de Registro",r=>r.tipo],["fase","Fase",r=>r.fase],["cc","Comportamento Tático / Técnica",r=>cellOf(r)],["kpi","KPI",r=>r.kpi],["freq","Frequência",r=>r.freq],["rep","Nº Rep.",r=>r.rep??-1],["ac","Acertos",r=>r.ac??-1],["er","Erros",r=>r.er??-1],["pct","% Aprov.",r=>pctRow(r)??-1],["resp","Responsável",r=>r.resp]];
+function filtered(){
+  const q=UI.q.toLowerCase();
+  return ROWS.filter(r=>(!UI.tipo||r.tipo===UI.tipo)&&(!UI.atl||r.atleta===UI.atl)&&(!UI.comp||compOf(r.data)===UI.comp)&&(!q||[r.id,atl(r.atleta).nome,r.atleta,cellOf(r),r.kpi,r.resp,r.tipo].join(" ").toLowerCase().includes(q)));
+}
+PAGES.lista=function(){
+  $("#content").innerHTML=`
+  <div class="webpart">${kpiStripHtml()}</div>
+  <div class="webpart">
+    <div class="webpart-head"><div><h2>Lista - Tático Técnico <span class="badge-count" id="cnt"></span></h2><div class="sub">Intervenções, vídeos e ocorrências — cada item referencia o AtletaID do cadastro central · clique em uma linha para ver detalhes e trilha de alterações</div></div>
+      <div class="wp-actions"><button class="btn-secondary" onclick="exportCsv()">⬇ Exportar CSV</button><button class="btn-primary" onclick="openForm('lista')">+ Novo item</button></div></div>
+    <div class="list-toolbar">
+      <input type="text" id="q" placeholder="🔍 Pesquisar nesta lista" value="${esc(UI.q)}" oninput="UI.q=this.value;renderRows()">
+      ${["","Intervenção Tática","Intervenção Técnica","Intervenção Vídeo","Ocorrência"].map(t=>`<button class="chip-filter ${UI.tipo===t?"on":""}" onclick="UI.tipo='${t}';PAGES.lista()">${t||"Todos"}</button>`).join("")}
+      <select onchange="UI.atl=this.value;renderRows()"><option value="">Todos os atletas</option>${ATLETAS.map(a=>`<option value="${a.id}" ${UI.atl===a.id?"selected":""}>${a.nome}</option>`).join("")}</select>
+      <select onchange="UI.comp=this.value;renderRows()"><option value="">Todas as competências</option>${[...new Set(ROWS.map(r=>compOf(r.data)).concat([...OPEN_COMPS]))].sort((a,b)=>compKey(a)-compKey(b)).map(c=>`<option ${UI.comp===c?"selected":""}>${c}</option>`).join("")}</select>
+      <div class="viewsel">Exibição: <b>Todos os itens</b> ▾</div></div>
+    <div style="overflow-x:auto;max-height:560px"><table class="splist"><thead><tr id="thead"></tr></thead><tbody id="listBody"></tbody></table></div>
+  </div>`;
+  renderRows();
+};
+function renderRows(){
+  const c=COLS.find(x=>x[0]===UI.sort.k)||COLS[0];
+  const rs=filtered().sort((a,b)=>{const x=c[2](a),y=c[2](b);return (x>y?1:x<y?-1:0)*UI.sort.d||(a.id>b.id?1:-1)});
+  $("#cnt").textContent=rs.length+" itens";
+  $("#thead").innerHTML=COLS.map(c=>`<th onclick="sortBy('${c[0]}')">${c[1]} <span style="opacity:.5">${UI.sort.k===c[0]?(UI.sort.d>0?"▴":"▾"):""}</span></th>`).join("");
+  $("#listBody").innerHTML=rs.length?rs.map(r=>{const a=atl(r.atleta),p=pctRow(r);return `<tr onclick="openDetail('${r.id}')">
+    <td><span style="color:var(--sp-blue)">☑</span> ${r.id}</td><td><b>${a.nome}</b> <span style="color:var(--sp-sub);font-size:11.5px">${a.posicao}</span></td><td>${r.data}</td><td>${compOf(r.data)}</td>
+    <td><span class="pill ${pillTipo(r.tipo)}">${r.tipo}</span></td><td>${r.fase?`<span class="pill ${fase_pill(r.fase)}">${r.fase}</span>`:""}</td>
+    <td class="wrap">${esc(cellOf(r))}</td><td class="wrap" style="min-width:200px">${esc(r.kpi)}</td><td>${r.freq}</td><td>${r.rep??""}</td><td>${r.ac??""}</td><td>${r.er??""}</td><td>${p==null?"":fPct(p)}</td><td style="font-size:11.5px;color:var(--sp-sub)">${esc(r.resp)}</td></tr>`}).join(""):`<tr><td colspan="14" class="empty">Nenhum item para o filtro selecionado.</td></tr>`;
+}
+function sortBy(k){UI.sort=UI.sort.k===k?{k,d:-UI.sort.d}:{k,d:1};renderRows()}
+function exportCsv(){
+  const h=["ID","AtletaID","Nome","Data","Competência","Tipo","Fase","Comportamento/Técnica","KPI","Frequência","Rep","Acertos","Erros","% Aprov.","Responsável"];
+  const lines=[h].concat(filtered().map(r=>[r.id,r.atleta,atl(r.atleta).nome,r.data,compOf(r.data),r.tipo,r.fase,cellOf(r),r.kpi,r.freq,r.rep??"",r.ac??"",r.er??"",pctRow(r)==null?"":fPct(pctRow(r)),r.resp]));
+  const csv="﻿"+lines.map(l=>l.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(";")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="TaticoTecnico_BarraFC.csv";a.click();toast("CSV exportado ("+(lines.length-1)+" itens).");
+}
+
+/* ================= DETALHE (slide-over) ================= */
+let DEL_ARM=null;
+function openDetail(id){
+  const r=ROWS.find(x=>x.id===id)||JOGOS.find(x=>x.id===id);if(!r)return;const a=atl(r.atleta),isJ=id.startsWith("KJ"),p=isJ?null:pctRow(r);
+  const comp=compOf(r.data),st=compStatus(comp),can=st==="aberta";
+  const rows=isJ?[["Atleta",`${a.nome} (${a.id})`],["Categoria · Posição",`${a.cat} · ${a.posicao}`],["Data",r.data],["Competência",`${comp} · ${st}`],["Jogo",r.jogo],["Minutos",r.min],["Nível de jogo",r.nivel],["Fase",r.fase],["Comportamento",r.comportamento],["KPI",r.kpi],["Valor do KPI",r.valor],["Por 90 min",(r.valor/r.min*90).toFixed(1).replace(".",",")],["Responsável",r.resp]]
+   :[["Atleta",`${a.nome} (${a.id})`],["Categoria · Posição",`${a.cat} · ${a.posicao}`],["Frequência de treino",a.freq],["Data",r.data],["Competência",`${comp} · ${st}`],["Tipo de Registro",r.tipo],r.fase&&["Fase",r.fase],r.comportamento&&["Comportamento tático",r.comportamento],r.kpi&&["KPI",r.kpi],r.tecnica&&["Técnica",r.tecnica],r.desc&&["Descrição do vídeo",r.desc],r.link&&["Link",r.link],r.just&&["Justificativa",r.just],r.prox&&["Próximo passo",r.prox],r.obs&&["Observação",r.obs],r.freq&&["Frequência (semana)",r.freq],r.rep!=null&&["Nº Repetições",r.rep],r.ac!=null&&["Acertos",r.ac],r.er!=null&&["Erros",r.er],p!=null&&["% Aproveitamento",fPct(p)],["Responsável",r.resp],["Criado em",r.criado]].filter(Boolean);
+  const trail=LOG.filter(l=>l.item===id);
+  $("#panelTitle").textContent=id+" · "+(isJ?"KPI de Jogo":r.tipo);
+  $("#panelBody").innerHTML=`<dl class="dl">${rows.map(x=>`<dt>${x[0]}</dt><dd>${esc(x[1])}</dd>`).join("")}</dl>
+   <h4 style="margin:0 0 8px;color:var(--azul-escuro)">Trilha de alterações</h4>
+   <table class="t2"><thead><tr><th>Quando</th><th>Usuário</th><th>Campo</th><th>Alteração</th></tr></thead><tbody>${trail.map(l=>`<tr><td>${esc(l.quando)}</td><td>${esc(l.usuario)}</td><td>${esc(l.campo)}</td><td>${l.de?esc(l.de)+" → ":""}${esc(l.para)}</td></tr>`).join("")}</tbody></table>
+   <div style="margin-top:18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn-danger" id="delBtn" ${can?"":"disabled"} onclick="delItem('${id}')">🗑️ Excluir</button>${can?"":`<span class="note" style="margin:0">Exclusão bloqueada: competência ${comp} está ${st}. Somente a Controladoria reabre.</span>`}</div>`;
+  DEL_ARM=null;$("#ov").classList.add("on");$("#panel").classList.add("on");
+}
+function delItem(id){
+  const b=$("#delBtn");if(DEL_ARM!==id){DEL_ARM=id;b.textContent="Confirmar exclusão";return}
+  const list=id.startsWith("KJ")?JOGOS:ROWS;const i=list.findIndex(x=>x.id===id);const [r]=list.splice(i,1);r._del=id.startsWith("KJ")?"J":"R";TRASH.push(r);
+  LOG.push({quando:nowStamp(),usuario:USUARIO,item:id,campo:"(item)",de:"Ativo",para:"Movido para a Lixeira"});closeAll();toast(id+" movido para a Lixeira.");renderNav();renderPage();
+}
+
+/* ================= FORMULÁRIO PADRÃO ================= */
+let FORM={mode:"lista",vals:{},errors:{}};
+const blankVals=()=>({atleta:"",tipo:"Intervenção Tática",data:"2026-11-09",comp:"11/2026",resp:USUARIO,fase:"",comportamento:"",kpi:"",tecnica:"",freq:"",rep:"",ac:"",er:"",desc:"",link:"",just:"",prox:"",obs:"",jogo:"Jogo 1",min:"",nivel:"",valor:""});
+function openForm(mode,keep){
+  FORM={mode,vals:Object.assign(blankVals(),keep||{}),errors:{}};if(mode==="jogo")FORM.vals.tipo="KPI de Jogo";
+  $("#modalTitle").textContent=mode==="jogo"?"Novo item · KPI de Jogo":"Novo item · Lista - Tático Técnico";
+  renderForm();$("#ov").classList.add("on");$("#modal").classList.add("on");
+}
+function collect(){$$("#formGrid [name]").forEach(el=>FORM.vals[el.name]=el.value)}
+function opt(list,sel,ph){return `<option value="">${ph||"— selecione —"}</option>`+list.map(x=>{const v=Array.isArray(x)?x[0]:x,l=Array.isArray(x)?x[1]:x;return `<option value="${esc(v)}" ${String(sel)===String(v)?"selected":""}>${esc(l)}</option>`}).join("")}
+function fld(name,label,control,o={}){const e=FORM.errors[name];return `<div class="fld ${o.full?"full":""} ${e?"err":""}" id="f_${name}"><label>${label}${o.req?' <span class="req">*</span>':""}</label>${control}${o.hint?`<div class="hint">${o.hint}</div>`:""}<div class="emsg">${esc(e||"")}</div></div>`}
+const selF=(name,list,ph,extra)=>`<select name="${name}" ${extra||""}>${opt(list,FORM.vals[name],ph)}</select>`;
+const inF=(name,type,extra)=>`<input name="${name}" type="${type}" value="${esc(FORM.vals[name])}" ${extra||""}>`;
+function formAtleta(){return atl(FORM.vals.atleta)}
+function renderForm(){
+  const v=FORM.vals,a=formAtleta(),isJ=FORM.mode==="jogo";let h="";
+  h+=`<div class="fsec">Identificação</div>`;
+  h+=fld("atleta","Atleta",selF("atleta",ATLETAS.map(x=>[x.id,`${x.nome} — ${x.cat} · ${x.posicao}`]),"— selecione o atleta —",`onchange="onChange()"`),{req:1,full:1});
+  if(a)h+=`<div class="infobox"><b>${a.nome}</b> · AtletaID <b>${a.id}</b> · ${a.cat} · Ficha Base · Posição <b>${a.posicao}</b> · Frequência de treino <b>${a.freq}</b><br><span style="color:var(--sp-sub)">Dados herdados do Cadastro Central — somente leitura.</span></div>`;
+  if(!isJ)h+=fld("tipo","Tipo de Registro",selF("tipo",["Intervenção Tática","Intervenção Técnica","Intervenção Vídeo","Ocorrência"],null,`onchange="onChange()"`),{req:1,hint:"Define quais campos aparecem abaixo."});
+  else h+=fld("tipo","Tipo de Registro",`<input value="KPI de Jogo" readonly>`);
+  h+=fld("resp","Responsável pelo registro",inF("resp","text"),{req:1,hint:"Identifica quem registrou (e-mail compartilhado ou nome)."});
+  h+=fld("data","Data",inF("data","date",`onchange="onDate(this.value)"`),{req:1});
+  const cst=compStatus(v.comp);
+  h+=fld("comp","Mês de competência",selF("comp",COMPETENCIAS.map(c=>[c,`${c} · ${compStatus(c)}`]),null,`onchange="onChange()"`),{req:1,hint:"Registro só é aceito no mês de competência aberto."});
+  if(cst!=="aberta")h+=`<div class="infobox warn">Competência <b>${v.comp}</b> está <b>${cst}</b> — não será possível salvar. Abra a competência (Controladoria) ou escolha ${[...OPEN_COMPS].join(", ")||"uma competência aberta"}.</div>`;
+  const tipo=v.tipo;
+  if(tipo==="Intervenção Tática"||tipo==="KPI de Jogo"){
+    h+=`<div class="fsec">${isJ?"KPI de jogo":"Objetivo tático e KPI"}</div>`;
+    if(a&&!a.obj.length)h+=`<div class="infobox bad">Este atleta ainda não tem objetivos táticos definidos no Cadastro Central — o formulário só abre para objetivos definidos.</div>`;
+    const fases=a?[...new Set(a.obj.map(c=>faseOf(a.posicao,c)))]:[];
+    h+=fld("fase","Fase",selF("fase",fases,a?"— selecione —":"Selecione o atleta antes",`onchange="onChange()" ${a?"":"disabled"}`),{req:1});
+    const cs=a&&v.fase?a.obj.filter(c=>faseOf(a.posicao,c)===v.fase):[];
+    h+=fld("comportamento","Comportamento tático (objetivo definido)",selF("comportamento",cs,v.fase?"— selecione —":"Selecione a fase",`onchange="onChange()" ${v.fase?"":"disabled"}`),{req:1,full:1,hint:a?`Somente os ${a.obj.length} objetivos definidos na ficha (de ${comportsOf(a.posicao).length} comportamentos previstos para ${a.posicao}).`:""});
+    const ks=a&&v.comportamento?kpisOf(a.posicao,v.comportamento):[];
+    h+=fld("kpi","KPI",selF("kpi",ks,v.comportamento?"— selecione —":"Selecione o comportamento",v.comportamento?"":"disabled"),{req:1,full:1,hint:ks.length?`${ks.length} KPI(s) da Base de Dados para este comportamento.`:""});
+  }
+  if(tipo==="Intervenção Técnica"){h+=`<div class="fsec">Fundamento técnico</div>`;h+=fld("tecnica","Técnica",selF("tecnica",OPT.tecnicas),{req:1,hint:"27 técnicas da Base de Dados."})}
+  if(isInterv({tipo})){h+=fld("freq","Frequência (semana)",selF("freq",OPT.freqSemana),{req:1});
+    h+=`<div class="fsec">Contagem</div>`+fld("rep","Nº de repetições",inF("rep","number",`min="1" step="1" oninput="liveCount()"`),{req:1})+fld("ac","Acertos",inF("ac","number",`min="0" step="1" oninput="liveCount()"`),{req:1})+fld("er","Erros",inF("er","number",`min="0" step="1" oninput="liveCount()"`),{req:1})+`<div class="infobox" id="liveBox">Informe repetições, acertos e erros.</div>`}
+  if(tipo==="Intervenção Vídeo"){h+=`<div class="fsec">Vídeo</div>`+fld("freq","Frequência (semana)",selF("freq",OPT.freqSemana),{req:1})+fld("desc","Descrição",selF("desc",OPT.videoDesc),{req:1})+fld("link","Link da playlist (opcional)",inF("link","url",`placeholder="https://"`),{full:1})}
+  if(tipo==="Ocorrência"){h+=`<div class="fsec">Ocorrência</div>`+fld("just","Justificativa",selF("just",OPT.justOcorr),{req:1,full:1})+fld("prox","Próximo passo",selF("prox",OPT.proxPasso),{req:v.just.includes("injustificado"),hint:"Obrigatório para não comparecimento injustificado."})+fld("obs","Observação",inF("obs","text"))}
+  if(isJ){h+=`<div class="fsec">Jogo</div>`+fld("jogo","Jogo",selF("jogo",Array.from({length:10},(_,i)=>"Jogo "+(i+1)),null),{req:1})+fld("min","Minutos jogados",selF("min",Array.from({length:17},(_,i)=>10+i*5)),{req:1})+fld("nivel","Nível de jogo",selF("nivel",["Jogo nível A","Jogo nível B","Jogo nível C"]),{req:1})+fld("valor","Valor do KPI (nº)",inF("valor","number",`min="0" step="1"`),{req:1})}
+  $("#formGrid").innerHTML=h;$("#formStatus").textContent=`Status da competência ${v.comp}: ${cst}`;liveCount();
+}
+function onChange(){collect();const v=FORM.vals;
+  if(v.fase&&!(formAtleta()||{obj:[]}).obj.some(c=>faseOf(formAtleta().posicao,c)===v.fase))v.fase="";
+  if(v.comportamento&&faseOf(formAtleta()?.posicao,v.comportamento)!==v.fase){v.comportamento=""}
+  if(v.kpi&&!kpisOf(formAtleta()?.posicao,v.comportamento).includes(v.kpi))v.kpi="";
+  FORM.errors={};renderForm()}
+function onDate(iso){collect();const c=iso?isoToBr(iso).slice(3):"";if(COMPETENCIAS.includes(c))FORM.vals.comp=c;FORM.errors={};renderForm()}
+function liveCount(){
+  const b=$("#liveBox");if(!b)return;const rep=parseInt($("[name=rep]").value),ac=parseInt($("[name=ac]").value),er=parseInt($("[name=er]").value);
+  if(isNaN(rep)||isNaN(ac)||isNaN(er)){b.className="infobox";b.innerHTML="Informe repetições, acertos e erros — a contagem precisa fechar.";return}
+  if(ac+er===rep){b.className="infobox good";b.innerHTML=`✔ Contagem fecha: ${ac} acertos + ${er} erros = ${rep} repetições · <b>Aproveitamento ${fPct(ac/rep)}</b>`}
+  else{b.className="infobox bad";b.innerHTML=`✖ Contagem não fecha: ${ac} acertos + ${er} erros = ${ac+er}, mas há ${rep} repetições (${ac+er>rep?"excede em "+(ac+er-rep):"faltam "+(rep-ac-er)}). O registro será bloqueado.`}
+}
+function validate(){
+  const v=FORM.vals,e={},req=n=>{if(v[n]===""||v[n]==null)e[n]="Campo obrigatório."};const t=v.tipo,a=formAtleta();
+  ["atleta","resp","data","comp"].forEach(req);
+  if(v.resp&&v.resp.trim().length<3)e.resp="Informe o nome do responsável.";
+  if(v.data&&v.comp&&!e.comp){if(isoToBr(v.data).slice(3)!==v.comp)e.data="Data fora do mês de competência selecionado (registro só no mês de competência).";}
+  if(v.comp&&compStatus(v.comp)!=="aberta")e.comp=`Competência ${v.comp} ${compStatus(v.comp)==="fechada"?"fechada":"ainda não aberta"} — registro bloqueado.`;
+  if(t==="Intervenção Tática"||t==="KPI de Jogo"){["fase","comportamento","kpi"].forEach(req);if(a&&!a.obj.length)e.atleta="Atleta sem objetivos definidos.";if(v.comportamento&&a&&!a.obj.includes(v.comportamento))e.comportamento="Comportamento não está nos objetivos definidos do atleta."}
+  if(t==="Intervenção Técnica")req("tecnica");
+  if(isInterv({tipo:t})){["freq","rep","ac","er"].forEach(req);const rep=+v.rep,ac=+v.ac,er=+v.er;
+    if(v.rep!==""&&(!Number.isInteger(rep)||rep<1))e.rep="Informe um inteiro ≥ 1.";if(v.ac!==""&&(!Number.isInteger(ac)||ac<0))e.ac="Inteiro ≥ 0.";if(v.er!==""&&(!Number.isInteger(er)||er<0))e.er="Inteiro ≥ 0.";
+    if(!e.rep&&!e.ac&&!e.er&&v.rep!==""&&v.ac!==""&&v.er!==""&&ac+er!==rep){e.ac=`Acertos + Erros (${ac+er}) ≠ repetições (${rep}).`;e.er="A contagem precisa fechar."}}
+  if(t==="Intervenção Vídeo"){["freq","desc"].forEach(req);if(v.link&&!/^https?:\/\//.test(v.link))e.link="Informe uma URL iniciando com http(s)://"}
+  if(t==="Ocorrência"){req("just");if(v.just.includes("injustificado"))req("prox")}
+  if(t==="KPI de Jogo"){["fase","comportamento","kpi","jogo","min","nivel","valor"].forEach(req);if(v.valor!==""&&(!Number.isInteger(+v.valor)||+v.valor<0))e.valor="Inteiro ≥ 0."}
+  return e;
+}
+function nextId(prefix,list){const all=list.concat(TRASH.filter(x=>x.id.startsWith(prefix)));const n=Math.max(0,...all.map(x=>parseInt(x.id.split("-")[1])));return prefix+"-"+String(n+1).padStart(3,"0")}
+function submitForm(again){
+  collect();FORM.errors=validate();const n=Object.keys(FORM.errors).length;
+  if(n){renderForm();const first=$("#formGrid .fld.err");if(first)first.scrollIntoView({block:"center"});toast(`Registro bloqueado: ${n} pendência(s) no formulário.`,true);return}
+  const v=FORM.vals,a=formAtleta(),data=isoToBr(v.data),stamp=nowStamp();let id;
+  if(FORM.mode==="jogo"){id=nextId("KJ",JOGOS);JOGOS.push({id,atleta:v.atleta,fase:v.fase,comportamento:v.comportamento,kpi:v.kpi,jogo:v.jogo,min:+v.min,nivel:v.nivel,valor:+v.valor,data,resp:v.resp.trim(),criado:stamp})}
+  else{id=nextId("TT",ROWS);const r=R(id,v.atleta,data,v.tipo,{fase:isInterv(v)&&v.tipo==="Intervenção Tática"?v.fase:"",comportamento:v.tipo==="Intervenção Tática"?v.comportamento:"",kpi:v.tipo==="Intervenção Tática"?v.kpi:"",tecnica:v.tipo==="Intervenção Técnica"?v.tecnica:"",freq:v.freq,rep:isInterv(v)?+v.rep:null,ac:isInterv(v)?+v.ac:null,er:isInterv(v)?+v.er:null,desc:v.desc,link:v.link,just:v.just,prox:v.prox,obs:v.obs,resp:v.resp.trim(),criado:stamp});ROWS.push(r)}
+  LOG.push({quando:stamp,usuario:v.resp.trim(),item:id,campo:"(item)",de:"",para:"Criado"});
+  toast(`${id} salvo — ${a.nome} · ${v.resp.trim()} · ${stamp}`);renderNav();
+  if(again){openForm(FORM.mode,{atleta:v.atleta,data:v.data,comp:v.comp,resp:v.resp,tipo:v.tipo})}else closeAll();
+  if(PAGE==="lista"){UI.q="";UI.tipo="";UI.atl="";UI.comp="";UI.sort={k:"id",d:-1}}
+  renderPage();
+}
+/* ================= PAINEL DE KPIs (estilo Controladoria) ================= */
+const DASH={atl:"",cat:"",pos:"",comp:"",tab:"geral"};
+function dashRows(){return ROWS.filter(r=>{const a=atl(r.atleta);return(!DASH.atl||r.atleta===DASH.atl)&&(!DASH.cat||a.cat===DASH.cat)&&(!DASH.pos||a.posicao===DASH.pos)&&(!DASH.comp||compOf(r.data)===DASH.comp)})}
+function dashAtletas(rs){return ATLETAS.filter(a=>(!DASH.atl||a.id===DASH.atl)&&(!DASH.cat||a.cat===DASH.cat)&&(!DASH.pos||a.posicao===DASH.pos))}
+function setDash(k,v){DASH[k]=v;PAGES.dashboard();drawDash()}
+function tabDash(t){DASH.tab=t;PAGES.dashboard();drawDash()}
+PAGES.dashboard=function(){
+  const rs=dashRows(),iv=agg(rs.filter(isInterv)),tat=agg(rs.filter(r=>r.tipo==="Intervenção Tática")),tec=agg(rs.filter(r=>r.tipo==="Intervenção Técnica"));
+  const oc=rs.filter(r=>r.tipo==="Ocorrência"),inj=oc.filter(r=>r.just.includes("injustificado")).length,vd=rs.filter(r=>r.tipo==="Intervenção Vídeo").length;
+  const compA=[...OPEN_COMPS].sort((a,b)=>compKey(b)-compKey(a))[0];const ats=dashAtletas();const cob=compA?ats.filter(a=>ROWS.some(r=>r.atleta===a.id&&compOf(r.data)===compA)).length:0;
+  const sem=semaforo(iv.pct);
+  const cards=[["Registros no filtro",rs.length,`${new Set(rs.map(r=>r.atleta)).size} atleta(s) com registro`,""],["% Aproveitamento geral",fPct(iv.pct),`${iv.ac} acertos · ${iv.er} erros · ${iv.rep} rep.`,iv.pct==null?"":iv.pct>=.55?"ok":iv.pct>=.4?"warn":"alert"],["% Tático",fPct(tat.pct),`${tat.n} intervenções`,tat.pct==null?"":tat.pct>=.55?"ok":tat.pct>=.4?"warn":"alert"],["% Técnico",fPct(tec.pct),`${tec.n} intervenções`,tec.pct==null?"":tec.pct>=.55?"ok":tec.pct>=.4?"warn":"alert"],["Repetições totais",fN(iv.rep),`média ${iv.n?Math.round(iv.rep/iv.n):0} por intervenção`,""],["Ocorrências",oc.length,inj?`${inj} injustificada(s)`:"sem faltas injustificadas",inj?"alert":oc.length?"warn":"ok"],["Intervenções de Vídeo",vd,"vídeos de jogo, treino, PDI e alto nível",""],[`Cobertura ${compA||"—"}`,compA?`${cob}/${ats.length}`:"—","atletas com registro na competência aberta",!compA?"warn":cob===ats.length?"ok":"warn"]];
+  const cats=[...new Set(ATLETAS.map(a=>a.cat))];const compsAll=[...new Set(ROWS.map(r=>compOf(r.data)).concat([...OPEN_COMPS]))].sort((a,b)=>compKey(a)-compKey(b));
+  $("#content").innerHTML=`
+  <div class="webpart"><div class="webpart-head"><div><h2>📊 Painel de KPIs · Tático Técnico</h2><div class="sub">Visão estilo Controladoria, calculada a partir da lista — atualiza a cada novo item lançado</div></div><div class="wp-actions"><button class="btn-secondary" onclick="go('lista')">Ver lista</button><button class="btn-primary" onclick="openForm('lista')">+ Novo item</button></div></div></div>
+  <div class="filters"><label>Atleta</label><select onchange="setDash('atl',this.value)"><option value="">Todos</option>${ATLETAS.map(a=>`<option value="${a.id}" ${DASH.atl===a.id?"selected":""}>${a.nome}</option>`).join("")}</select>
+   <label>Categoria</label><select onchange="setDash('cat',this.value)"><option value="">Todas</option>${cats.map(c=>`<option ${DASH.cat===c?"selected":""}>${c}</option>`).join("")}</select>
+   <label>Posição</label><select onchange="setDash('pos',this.value)"><option value="">Todas</option>${POSICOES.map(c=>`<option ${DASH.pos===c?"selected":""}>${c}</option>`).join("")}</select>
+   <label>Competência</label><select onchange="setDash('comp',this.value)"><option value="">Todas</option>${compsAll.map(c=>`<option ${DASH.comp===c?"selected":""}>${c}</option>`).join("")}</select>
+   <span style="margin-left:auto"><span class="badge ${sem[0]}">${sem[1]}</span> <span class="note" style="margin:0 0 0 6px">faixas provisórias: ≥55% positivo · 40–55% mediano · &lt;40% negativo (validar no kickoff)</span></span></div>
+  <div class="kpi-grid">${cards.map(k=>`<div class="kcard ${k[3]}"><div class="lbl">${k[0]}</div><div class="val">${k[1]}</div><div class="sub">${k[2]}</div></div>`).join("")}</div>
+  <div class="tabs">${[["geral","Visão Geral"],["atletas","Atletas"],["fund","Fundamentos"],["ocorr","Ocorrências & Vídeos"],["radar","Radar de preenchimento"]].map(t=>`<button class="tab-btn ${DASH.tab===t[0]?"active":""}" onclick="tabDash('${t[0]}')">${t[1]}</button>`).join("")}</div>
+  <div id="dashBody">${dashBodyHtml(rs)}</div>`;
+};
+function dashBodyHtml(rs){
+  const T=DASH.tab;
+  if(T==="geral")return `<div class="grid2"><div class="card"><h3>% Aproveitamento por atleta — Tático × Técnico</h3><div class="sub">Acertos ÷ repetições, ponderado pelo nº de repetições</div><canvas id="c1" style="height:270px"></canvas><div class="legend-row"><span><span class="legend-dot" style="background:#0B4FA2"></span>Tático</span><span><span class="legend-dot" style="background:#F2C100"></span>Técnico</span></div></div>
+   <div class="card"><h3>Registros por tipo</h3><div class="sub">Distribuição dos itens da lista</div><canvas id="c2" style="height:270px"></canvas></div></div>
+   <div class="grid2"><div class="card"><h3>Evolução do aproveitamento por data de registro</h3><div class="sub">Cada ponto = aproveitamento das intervenções do atleta naquela data</div><canvas id="c3" style="height:270px"></canvas><div class="legend-row" id="leg3"></div></div>
+   <div class="card"><h3>Acertos × Erros por atleta</h3><div class="sub">Composição das repetições</div><canvas id="c4" style="height:270px"></canvas><div class="legend-row"><span><span class="legend-dot" style="background:#2E7D32"></span>Acertos</span><span><span class="legend-dot" style="background:#C62828"></span>Erros</span></div></div></div>`;
+  if(T==="atletas")return `<div class="card"><h3>Comparativo entre atletas</h3><div class="sub">Semáforo pelo % de aproveitamento ponderado</div><div style="overflow-x:auto"><table class="t2"><thead><tr><th>Atleta</th><th>Cat.</th><th>Posição</th><th>Rep.</th><th>Acertos</th><th>Erros</th><th>% Aprov.</th><th>% Tático</th><th>% Técnico</th><th>Vídeos</th><th>Ocorr.</th><th>Semáforo</th></tr></thead><tbody>${dashAtletas().map(a=>{const x=rs.filter(r=>r.atleta===a.id),g=agg(x.filter(isInterv)),t1=agg(x.filter(r=>r.tipo==="Intervenção Tática")),t2=agg(x.filter(r=>r.tipo==="Intervenção Técnica")),s=semaforo(g.pct);return `<tr><td><b>${a.nome}</b></td><td>${a.cat}</td><td>${a.posicao}</td><td>${g.rep}</td><td>${g.ac}</td><td>${g.er}</td><td><b>${fPct(g.pct)}</b></td><td>${fPct(t1.pct)}</td><td>${fPct(t2.pct)}</td><td>${x.filter(r=>r.tipo==="Intervenção Vídeo").length}</td><td>${x.filter(r=>r.tipo==="Ocorrência").length}</td><td><span class="badge ${s[0]}">${s[1]}</span></td></tr>`}).join("")}</tbody></table></div></div>
+   <div class="card"><h3>Aproveitamento por atleta</h3><div class="sub">Barra única ponderada</div><canvas id="c5" style="height:240px"></canvas></div>`;
+  if(T==="fund"){
+    const tecs=[...new Set(rs.filter(r=>r.tipo==="Intervenção Técnica").map(r=>r.tecnica))].sort();
+    const tat=rs.filter(r=>r.tipo==="Intervenção Tática");
+    return `<div class="card"><h3>Fundamentos e objetivos que precisam de reforço</h3><div class="sub">Menores aproveitamentos (técnica ou comportamento tático × atleta) — barra colorida pelo semáforo</div><canvas id="c6"></canvas></div>
+    <div class="card"><h3>Mapa de calor · Atleta × Técnica</h3><div class="sub">% de aproveitamento por fundamento técnico (— = sem registro)</div><div style="overflow-x:auto">${tecs.length?`<table class="t2 heat"><thead><tr><th>Atleta</th>${tecs.map(t=>`<th>${t}</th>`).join("")}</tr></thead><tbody>${dashAtletas().map(a=>`<tr><td><b>${a.nome}</b></td>${tecs.map(t=>{const g=agg(rs.filter(r=>r.atleta===a.id&&r.tecnica===t));return `<td class="hc" style="background:${SEM_COR(g.pct)}" title="${g.rep} rep.">${g.pct==null?"—":fPct(g.pct)}</td>`}).join("")}</tr>`).join("")}</tbody></table>`:`<div class="empty">Sem intervenções técnicas no filtro.</div>`}</div></div>
+    <div class="card"><h3>Intervenções táticas por objetivo</h3><div class="sub">Comportamento × KPI (objetivos definidos na ficha)</div><div style="overflow-x:auto"><table class="t2"><thead><tr><th>Atleta</th><th>Fase</th><th>Comportamento</th><th>KPI</th><th>Rep.</th><th>% Aprov.</th><th></th></tr></thead><tbody>${tat.length?tat.map(r=>{const p=pctRow(r);return `<tr><td>${atl(r.atleta).nome}</td><td><span class="pill ${fase_pill(r.fase)}">${r.fase}</span></td><td>${esc(r.comportamento)}</td><td>${esc(r.kpi)}</td><td>${r.rep}</td><td><b>${fPct(p)}</b></td><td style="min-width:90px"><div class="progress"><div style="width:${p*100}%;background:${SEM_COR(p)}"></div></div></td></tr>`}).join(""):`<tr><td colspan="7" class="empty">Sem intervenções táticas no filtro.</td></tr>`}</tbody></table></div></div>`}
+  if(T==="ocorr"){const oc=rs.filter(r=>r.tipo==="Ocorrência"),vd=rs.filter(r=>r.tipo==="Intervenção Vídeo");
+    return `<div class="grid2e"><div class="card"><h3>Ocorrências por justificativa</h3><div class="sub">Não comparecimentos registrados</div><canvas id="c7"></canvas></div><div class="card"><h3>Vídeos por descrição</h3><div class="sub">Intervenções de vídeo aplicadas</div><canvas id="c8" style="height:220px"></canvas></div></div>
+    <div class="card"><h3>Detalhe de ocorrências e vídeos</h3><div class="sub">Clique em uma linha para abrir o item</div><table class="t2"><thead><tr><th>ID</th><th>Atleta</th><th>Data</th><th>Tipo</th><th>Descrição / Justificativa</th><th>Responsável</th></tr></thead><tbody>${oc.concat(vd).sort((a,b)=>dKey(a.data)-dKey(b.data)).map(r=>`<tr style="cursor:pointer" onclick="openDetail('${r.id}')"><td>${r.id}</td><td>${atl(r.atleta).nome}</td><td>${r.data}</td><td><span class="pill ${pillTipo(r.tipo)}">${r.tipo}</span></td><td>${esc(r.just||r.desc)}</td><td style="font-size:.75rem">${esc(r.resp)}</td></tr>`).join("")||`<tr><td colspan="6" class="empty">Nada no filtro.</td></tr>`}</tbody></table></div>`}
+  if(T==="radar"){const comps=[...new Set(ROWS.map(r=>compOf(r.data)).concat([...OPEN_COMPS]))].sort((a,b)=>compKey(a)-compKey(b));
+    return `<div class="card"><h3>Radar de preenchimento · Atleta × Competência</h3><div class="sub">O que foi lançado e o que está pendente em cada competência (em aberto = alvo da cobrança semanal)</div><div style="overflow-x:auto"><table class="t2"><thead><tr><th>Atleta</th>${comps.map(c=>`<th>${c}<br><span style="font-weight:400;text-transform:none">${compStatus(c)}</span></th>`).join("")}</tr></thead><tbody>${dashAtletas().map(a=>`<tr><td><b>${a.nome}</b></td>${comps.map(c=>{const n=ROWS.filter(r=>r.atleta===a.id&&compOf(r.data)===c).length;return `<td>${n?`<span class="badge b-verde">${n} reg.</span>`:`<span class="badge ${compStatus(c)==="aberta"?"b-vermelho":"b-cinza"}">${compStatus(c)==="aberta"?"Pendente":"Sem registro"}</span>`}</td>`}).join("")}</tr>`).join("")}</tbody></table></div><div class="note">Alerta semanal ao gestor da área (Teams/e-mail) lista os atletas “Pendente” da competência aberta — disponível no Módulo 2 · Governança e fechamento.</div></div>`}
+  return "";
+}
+function drawDash(){
+  if(PAGE!=="dashboard")return;const rs=dashRows(),T=DASH.tab,ats=dashAtletas();const short=a=>a.nome.split(" ")[0];
+  const g=(a,tipo)=>agg(rs.filter(r=>r.atleta===a.id&&(tipo?r.tipo===tipo:isInterv(r))));
+  if(T==="geral"){
+    const lab=ats.map(short);drawGrouped($("#c1"),lab,[{label:"Tático",color:"#0B4FA2",data:ats.map(a=>g(a,"Intervenção Tática").pct)},{label:"Técnico",color:"#F2C100",data:ats.map(a=>g(a,"Intervenção Técnica").pct)}],{pct:true,h:270});
+    const tipos=["Intervenção Tática","Intervenção Técnica","Intervenção Vídeo","Ocorrência"];drawDonut($("#c2"),tipos.map(t=>t.replace("Intervenção ","").replace("Tática","Tática").replace("Vídeo","Vídeo")),tipos.map(t=>rs.filter(r=>r.tipo===t).length),["#C62828","#2E7D32","#3A78C2","#F2C100"],{h:270});
+    const dates=[...new Set(rs.filter(r=>r.rep>0).map(r=>r.data))].sort((a,b)=>dKey(a)-dKey(b));
+    const ser=ats.map(a=>({label:a.nome,color:corAtleta(a.id),data:dates.map(d=>{const x=agg(rs.filter(r=>r.atleta===a.id&&r.data===d));return x.pct})}));
+    drawLine($("#c3"),dates.map(d=>d.slice(0,5)),ser,{h:270,pct:true});$("#leg3").innerHTML=ats.map(a=>`<span><span class="legend-dot" style="background:${corAtleta(a.id)}"></span>${a.nome}</span>`).join("");
+    drawStacked($("#c4"),lab,[{label:"Acertos",color:"#2E7D32",data:ats.map(a=>g(a).ac)},{label:"Erros",color:"#C62828",data:ats.map(a=>g(a).er)}],{h:270});
+  }
+  if(T==="atletas")drawColoredBarSimple($("#c5"),ats.map(short),ats.map(a=>g(a).pct||0),ats.map(a=>SEM_COR(g(a).pct)));
+  if(T==="fund"){const m={};rs.filter(r=>r.rep>0).forEach(r=>{const k=short(atl(r.atleta))+" · "+(r.tecnica||r.comportamento);m[k]=m[k]||{ac:0,rep:0};m[k].ac+=r.ac;m[k].rep+=r.rep});
+    const arr=Object.entries(m).map(([k,v])=>[k,v.ac/v.rep,v.rep]).sort((a,b)=>a[1]-b[1]).slice(0,10);drawHBar($("#c6"),arr.map(a=>a[0]),arr.map(a=>a[1]),arr.map(a=>SEM_COR(a[1])),{pct:true,extra:arr.map(a=>a[2]+" repetições")})}
+  if(T==="ocorr"){const oc={};rs.filter(r=>r.tipo==="Ocorrência").forEach(r=>oc[r.just]=(oc[r.just]||0)+1);const k=Object.keys(oc);drawHBar($("#c7"),k,k.map(x=>oc[x]),k.map(x=>x.includes("injustificado")?"#C62828":"#F2C100"));
+    const vd={};rs.filter(r=>r.tipo==="Intervenção Vídeo").forEach(r=>vd[r.desc]=(vd[r.desc]||0)+1);const kv=Object.keys(vd);drawDonut($("#c8"),kv,kv.map(x=>vd[x]),["#0B4FA2","#3A78C2","#F2C100","#2E7D32"],{h:220})}
+}
+function drawColoredBarSimple(c,labels,values,colors){if(!labels.length)return noData(c);const{ctx,W,H}=setupCanvas(c,240);const PAD={top:18,right:16,bottom:34,left:46},cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;grid(ctx,PAD,cW,cH,1,0,true);const gW=cW/labels.length,bw=Math.min(gW*.5,56),tips=[];
+  labels.forEach((l,i)=>{const bh=values[i]*cH,x=PAD.left+i*gW+(gW-bw)/2,y=PAD.top+cH-bh;ctx.fillStyle=colors[i];ctx.beginPath();ctx.roundRect(x,y,bw,bh,[4,4,0,0]);ctx.fill();tips.push({x,y,w:bw,h:bh,cat:l,val:values[i]});ctx.fillStyle="#163028";ctx.font="bold 11px Segoe UI";ctx.textAlign="center";ctx.fillText(fPct(values[i]),x+bw/2,y-5);ctx.fillText(l,x+bw/2,H-PAD.bottom+16)});hookTips(c,tips,t=>[`<b>${t.cat}</b>`,fPct(t.val)])}
+let _rt;window.addEventListener("resize",()=>{clearTimeout(_rt);_rt=setTimeout(()=>{if(PAGE==="dashboard")drawDash();if(PAGE==="kpisjogo")drawJogo()},150)});
+
+/* ================= KPIs DE JOGO ================= */
+const JF={atl:"",fase:"",nivel:""};
+function jogosF(){return JOGOS.filter(j=>(!JF.atl||j.atleta===JF.atl)&&(!JF.fase||j.fase===JF.fase)&&(!JF.nivel||j.nivel===JF.nivel))}
+function setJF(k,v){JF[k]=v;PAGES.kpisjogo();drawJogo()}
+PAGES.kpisjogo=function(){
+  const js=jogosF(),min=js.reduce((s,j)=>s+j.min,0),val=js.reduce((s,j)=>s+j.valor,0),sem=ATLETAS.filter(a=>!JOGOS.some(j=>j.atleta===a.id));
+  $("#content").innerHTML=`
+  <div class="webpart"><div class="webpart-head"><div><h2>KPIs de Jogo <span class="badge-count">${js.length} itens</span></h2><div class="sub">KPI selecionado por fase e comportamento, jogo, minutos e nível de jogo — opções da Base de Dados KPIs (104 KPIs · 6 posições)</div></div><div class="wp-actions"><button class="btn-primary" onclick="openForm('jogo')">+ Novo item</button></div></div></div>
+  <div class="filters"><label>Atleta</label><select onchange="setJF('atl',this.value)"><option value="">Todos</option>${ATLETAS.map(a=>`<option value="${a.id}" ${JF.atl===a.id?"selected":""}>${a.nome}</option>`).join("")}</select>
+   <label>Fase</label><select onchange="setJF('fase',this.value)"><option value="">Todas</option><option ${JF.fase==="Ofensiva"?"selected":""}>Ofensiva</option><option ${JF.fase==="Defensiva"?"selected":""}>Defensiva</option></select>
+   <label>Nível de jogo</label><select onchange="setJF('nivel',this.value)"><option value="">Todos</option>${["A","B","C"].map(n=>`<option ${JF.nivel==="Jogo nível "+n?"selected":""} value="Jogo nível ${n}">Jogo nível ${n}</option>`).join("")}</select></div>
+  <div class="kpi-grid"><div class="kcard"><div class="lbl">Lançamentos de jogo</div><div class="val">${js.length}</div><div class="sub">${new Set(js.map(j=>j.atleta)).size} atleta(s)</div></div>
+   <div class="kcard"><div class="lbl">Minutos lançados</div><div class="val">${fN(min)}</div><div class="sub">soma dos jogos no filtro</div></div>
+   <div class="kcard"><div class="lbl">Valor de KPI / 90 min</div><div class="val">${min?(val/min*90).toFixed(1).replace(".",","):"—"}</div><div class="sub">taxa média ponderada pelos minutos</div></div>
+   <div class="kcard ${sem.length?"warn":"ok"}"><div class="lbl">Atletas sem jogo lançado</div><div class="val">${sem.length}</div><div class="sub">${sem.map(a=>a.nome).join(", ")||"todos com lançamento"}</div></div></div>
+  <div class="grid2e"><div class="card"><h3>KPI por 90 minutos — Ofensiva × Defensiva</h3><div class="sub">Valor do KPI normalizado pelos minutos jogados</div><canvas id="j1" style="height:240px"></canvas><div class="legend-row"><span><span class="legend-dot" style="background:#0B4FA2"></span>Ofensiva</span><span><span class="legend-dot" style="background:#F2C100"></span>Defensiva</span></div></div>
+   <div class="card"><h3>Lançamentos por nível de jogo</h3><div class="sub">A (maior exigência) a C</div><canvas id="j2" style="height:240px"></canvas></div></div>
+  <div class="webpart"><div style="overflow-x:auto"><table class="splist"><thead><tr>${["ID","Atleta","Posição","Fase","Comportamento","KPI selecionado","Jogo","Minutos","Nível de Jogo","Valor","/ 90 min"].map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${js.map(j=>{const a=atl(j.atleta);return `<tr onclick="openDetail('${j.id}')"><td>${j.id}</td><td><b>${a.nome}</b></td><td>${a.posicao}</td><td><span class="pill ${fase_pill(j.fase)}">${j.fase}</span></td><td class="wrap">${esc(j.comportamento)}</td><td class="wrap">${esc(j.kpi)}</td><td>${j.jogo}</td><td>${j.min}</td><td>${j.nivel}</td><td><b>${j.valor}</b></td><td>${(j.valor/j.min*90).toFixed(1).replace(".",",")}</td></tr>`}).join("")||`<tr><td colspan="11" class="empty">Nenhum lançamento no filtro.</td></tr>`}</tbody></table></div>
+  <div class="wp-body"><div class="note">Brayan Bismark: nenhum jogo lançado neste ciclo (dado real). Valores de KPI dos demais atletas são simulados; jogo, minutos e nível seguem o protótipo da Controladoria.</div></div></div>`;
+  drawJogo();
+};
+function drawJogo(){
+  if(PAGE!=="kpisjogo")return;const js=jogosF(),ats=ATLETAS.filter(a=>js.some(j=>j.atleta===a.id));
+  const rate=(a,f)=>{const x=js.filter(j=>j.atleta===a.id&&j.fase===f),m=x.reduce((s,j)=>s+j.min,0);return m?x.reduce((s,j)=>s+j.valor,0)/m*90:null};
+  const c=$("#j1");const{ctx}=setupCanvas(c,240);const vals=ats.flatMap(a=>[rate(a,"Ofensiva"),rate(a,"Defensiva")]).filter(v=>v!=null);const mx=Math.max(1,...vals);
+  drawGrouped(c,ats.map(a=>a.nome.split(" ")[0]),[{label:"Ofensiva (KPI/90)",color:"#0B4FA2",data:ats.map(a=>rate(a,"Ofensiva")==null?null:+rate(a,"Ofensiva").toFixed(1))},{label:"Defensiva (KPI/90)",color:"#F2C100",data:ats.map(a=>rate(a,"Defensiva")==null?null:+rate(a,"Defensiva").toFixed(1))}],{h:240});
+  const niv=["Jogo nível A","Jogo nível B","Jogo nível C"];drawDonut($("#j2"),niv,niv.map(n=>js.filter(j=>j.nivel===n).length),["#2E7D32","#3A78C2","#F2C100"],{h:240});
+}
+
+/* ================= BASE DE DADOS (OPÇÕES) ================= */
+const BS={tab:"kpis",pos:"",fase:"",q:""};
+PAGES.base=function(){
+  const comp=new Set(KPI_BASE.map(k=>k[0]+"|"+k[2])).size;
+  $("#content").innerHTML=`
+  <div class="webpart"><div class="webpart-head"><div><h2>Base de Dados (Opções)</h2><div class="sub">Origem das opções do formulário — Base de dados KPIs (planilha atual) e listas de escolha do checkpoint. Alimenta os campos “Choice” do SharePoint / Power Apps.</div></div></div></div>
+  <div class="tabs"><button class="tab-btn ${BS.tab==="kpis"?"active":""}" onclick="BS.tab='kpis';PAGES.base()">Catálogo de KPIs por posição</button><button class="tab-btn ${BS.tab==="listas"?"active":""}" onclick="BS.tab='listas';PAGES.base()">Listas de escolha (colunas Choice)</button></div>
+  <div id="baseBody"></div>`;
+  if(BS.tab==="kpis")baseKpis(comp);else baseListas();
+};
+function baseKpis(nComp){
+  const rows=KPI_BASE.filter(k=>(!BS.pos||k[0]===BS.pos)&&(!BS.fase||k[1]===BS.fase)&&(!BS.q||k.join(" ").toLowerCase().includes(BS.q.toLowerCase())));
+  $("#baseBody").innerHTML=`
+  <div class="kpi-grid">${POSICOES.map(p=>{const n=KPI_BASE.filter(k=>k[0]===p).length,c=new Set(KPI_BASE.filter(k=>k[0]===p).map(k=>k[2])).size;return `<div class="kcard ${BS.pos===p?"warn":""}" style="cursor:pointer" onclick="BS.pos=BS.pos==='${p}'?'':'${p}';PAGES.base()"><div class="lbl">${p}</div><div class="val">${n}</div><div class="sub">KPIs · ${c} comportamentos</div></div>`}).join("")}</div>
+  <div class="webpart"><div class="list-toolbar"><input type="text" placeholder="🔍 Buscar comportamento ou KPI" value="${esc(BS.q)}" oninput="BS.q=this.value;baseKpisTable()"><select onchange="BS.fase=this.value;PAGES.base()"><option value="">Todas as fases</option><option ${BS.fase==="Ofensiva"?"selected":""}>Ofensiva</option><option ${BS.fase==="Defensiva"?"selected":""}>Defensiva</option></select><span id="bkCount"></span><span class="viewsel">Total: ${KPI_BASE.length} KPIs · ${nComp} comportamentos · 6 posições</span></div>
+  <div style="overflow-x:auto;max-height:560px"><table class="splist"><thead><tr><th>Posição</th><th>Fase</th><th>Comportamento</th><th>KPI</th></tr></thead><tbody id="bkBody"></tbody></table></div></div>`;
+  baseKpisTable();
+}
+function baseKpisTable(){const rows=KPI_BASE.filter(k=>(!BS.pos||k[0]===BS.pos)&&(!BS.fase||k[1]===BS.fase)&&(!BS.q||k.join(" ").toLowerCase().includes(BS.q.toLowerCase())));$("#bkCount").textContent=rows.length+" KPIs";
+  $("#bkBody").innerHTML=rows.map(k=>`<tr style="cursor:default"><td><b>${k[0]}</b></td><td><span class="pill ${fase_pill(k[1])}">${k[1]}</span></td><td class="wrap">${esc(k[2])}</td><td class="wrap">${esc(k[3])}</td></tr>`).join("")||`<tr><td colspan="4" class="empty">Nada encontrado.</td></tr>`}
+function baseListas(){
+  const F=[["Tipo de Registro","Escolha (Choice)",["Intervenção Tática","Intervenção Técnica","Intervenção Vídeo","Ocorrência"],"Define o conjunto de campos exibido no formulário (regra condicional)."],
+   ["Posição","Escolha (Choice) — herdado do Cadastro Central",POSICOES,"Somente leitura no formulário; filtra comportamentos e KPIs."],
+   ["Fase","Escolha (Choice) — dependente da Posição",["Ofensiva","Defensiva"],"Derivada do comportamento na Base de KPIs."],
+   ["Comportamento Tático","Escolha (Choice) — dependente da Posição e dos objetivos definidos",[`${new Set(KPI_BASE.map(k=>k[0]+k[2])).size} comportamentos por posição (ver catálogo)`],"Somente os objetivos definidos na ficha do atleta aparecem como opção."],
+   ["KPI","Escolha (Choice) — dependente do Comportamento",[`${KPI_BASE.length} KPIs (ver catálogo)`],"Opções automáticas por posição e objetivo."],
+   ["Técnica","Escolha (Choice)",OPT.tecnicas,`${OPT.tecnicas.length} técnicas da Base de Dados do checkpoint.`],
+   ["Frequência (semana)","Escolha (Choice)",OPT.freqSemana,""],
+   ["Frequência de Treino do Atleta","Escolha (Choice)",OPT.freqTreino,"Preenchido uma vez no Cadastro Central e refletido como somente leitura."],
+   ["Descrição (Intervenção Vídeo)","Escolha (Choice)",OPT.videoDesc,""],
+   ["Justificativa (Ocorrência)","Escolha (Choice)",OPT.justOcorr,"Próximo passo é obrigatório quando o não comparecimento é injustificado."],
+   ["Próximo Passo (Ocorrência)","Escolha (Choice)",OPT.proxPasso,""],
+   ["Minutos (KPI de Jogo)","Escolha (Choice)",Array.from({length:17},(_,i)=>String(10+i*5)),"De 10 a 90 minutos, de 5 em 5."],
+   ["Nível de Jogo","Escolha (Choice)",["Jogo nível A","Jogo nível B","Jogo nível C"],""],
+   ["Categoria","Escolha (Choice)",["Sub 14 (reservada)","Sub 15","Sub 17","Sub 20","Profissional"],"Sub-14 reservada: entra quando o clube voltar a participar. Base: Sub-15, 17 e 20."],
+   ["Nº Repetições / Acertos / Erros","Número",[],"Validação: acertos + erros = repetições (inteiros; repetições ≥ 1). % Aproveitamento = Acertos ÷ Repetições (coluna calculada)."]];
+  $("#baseBody").innerHTML=`<div class="webpart"><div class="wp-body">${F.map(f=>`<div class="field-card"><div class="field-head"><span class="name">${f[0]}</span><span class="type">${f[1]}</span></div><div class="field-body">${f[2].length?f[2].map(o=>`<span class="choice-chip">${esc(o)}</span>`).join(""):`<span style="color:var(--sp-sub);font-size:12.5px">Campo numérico — sem opções de escolha</span>`}${f[3]?`<div class="field-note">${f[3]}</div>`:""}</div></div>`).join("")}</div></div>`;
+}
+
+/* ================= DOCUMENTOS ================= */
+let DOCP="";
+const FILEICO={xlsm:"📗",xlsx:"📗",pdf:"📕",docx:"📘",pptx:"📙",url:"🔗"};
+function docsOf(a){const n=a.nome;return [["Checkpoint PDI Ciclo 02.2026 - "+n+".xlsm","xlsm","18/06/2026","Comissão Técnica","786 KB","Interno"],["Playlist de vídeos - "+n+".url","url","12/05/2026","Comissão Técnica","1 KB","Interno"],["Conclusão PDI ciclo 02.2026 - "+n+".pdf","pdf","30/06/2026","Controladoria","1,2 MB","Restrito"]]}
+const DOCS_GERAL=[["Base de dados KPIs.xlsx","xlsx","08/11/2026","Leonardo V.","23 KB","Interno"],["Guia de preenchimento - Tático Técnico.pdf","pdf","09/11/2026","Leonardo V.","410 KB","Aberto"],["Regras de conclusão do ciclo (rascunho).docx","docx","13/10/2026","Controladoria","52 KB","Interno"],["Guia de Identidade Barra FC.docx","docx","03/09/2026","Controladoria","33 KB","Aberto"]];
+PAGES.docs=function(){
+  const sens={Aberto:"pill-ok",Interno:"pill-video",Restrito:"pill-warn"};
+  let body;
+  if(!DOCP){body=[...ATLETAS.map(a=>[a.nome,a.id,"3 itens","Restrito à Comissão Técnica e Controladoria"]),["Modelos e Guias","—",DOCS_GERAL.length+" itens","Todos os membros"]].map(f=>`<tr onclick="DOCP='${f[0]}';PAGES.docs()"><td><span class="fileicon">📁</span><span class="folder-link">${f[0]}</span></td><td>${f[1]}</td><td>${f[2]}</td><td>${f[3]}</td></tr>`).join("");
+    body=`<table class="splist"><thead><tr><th>Nome</th><th>AtletaID</th><th>Itens</th><th>Acesso</th></tr></thead><tbody>${body}</tbody></table>`}
+  else{const a=ATLETAS.find(x=>x.nome===DOCP);const f=a?docsOf(a):DOCS_GERAL;
+    body=`<table class="splist"><thead><tr><th>Nome</th><th>Modificado</th><th>Modificado por</th><th>Tamanho</th><th>Sensibilidade</th></tr></thead><tbody>${f.map(x=>`<tr style="cursor:default"><td><span class="fileicon">${FILEICO[x[1]]}</span>${x[0]}</td><td>${x[2]}</td><td>${x[3]}</td><td>${x[4]}</td><td><span class="pill ${sens[x[5]]}">${x[5]}</span></td></tr>`).join("")}</tbody></table>`}
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>Documentos</h2><div class="sub"><span class="folder-link" onclick="DOCP='';PAGES.docs()">Documentos</span>${DOCP?" › "+DOCP:""} · biblioteca com acesso restrito por pasta</div></div><div class="wp-actions"><button class="btn-secondary" onclick="toast('Protótipo: o envio de arquivos é feito na biblioteca real.')">⬆ Carregar</button><button class="btn-primary" onclick="toast('Protótipo: criação de pasta/arquivo no SharePoint real.')">+ Novo</button></div></div><div style="overflow-x:auto">${body}</div></div>
+  <div class="note">Arquivos de Brayan Bismark refletem o checkpoint real; demais nomes de arquivo são ilustrativos.</div>`;
+};
+
+/* ================= CADASTRO CENTRAL (visão embutida) ================= */
+PAGES.cadastro=function(){
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>Cadastro Central do Atleta <span class="badge-count">somente consulta</span></h2><div class="sub">Visão da Comissão Técnica sobre a ficha central — a edição é feita pelo Registro. Objetivos definidos aqui alimentam as opções do formulário.</div></div><div class="wp-actions"><a class="btn-primary" style="text-decoration:none;display:inline-block" href="CadastroCentral_Atleta_BarraFC.html" target="_blank">Abrir Cadastro Central completo ↗</a></div></div>
+  <div style="overflow-x:auto"><table class="splist"><thead><tr>${["AtletaID","Nome","Categoria","Ficha","Posição","Freq. treino","Objetivos táticos","Registros na lista","% Aprov.","Semáforo"].map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${ATLETAS.map(a=>{const x=ROWS.filter(r=>r.atleta===a.id),g=agg(x.filter(isInterv)),s=semaforo(g.pct);return `<tr onclick="UI.atl='${a.id}';UI.tipo='';UI.q='';UI.comp='';go('lista')"><td>${a.id}</td><td><b>${a.nome}</b>${a.real?' <span class="pill pill-gray">dado real</span>':""}</td><td>${a.cat}</td><td>Base</td><td>${a.posicao}</td><td>${a.freq}</td><td>${a.obj.length}</td><td>${x.length}</td><td>${fPct(g.pct)}</td><td><span class="badge ${s[0]}">${s[1]}</span></td></tr>`}).join("")}</tbody></table></div></div>
+  <div class="webpart"><div class="webpart-head"><h2>Objetivos táticos definidos por atleta</h2></div><div class="wp-body">${ATLETAS.map(a=>`<div class="feed-item"><b>${a.nome}</b> · ${a.posicao}<small>${a.obj.map(o=>`${faseOf(a.posicao,o)} — ${esc(o)}`).join("<br>")}</small></div>`).join("")}</div></div>`;
+};
+
+/* ================= BLOCO DE ANOTAÇÕES ================= */
+let NOTES=[{s:"Reuniões da Comissão",p:[{t:"Alinhamento do ciclo — 03/11",b:"Pauta\n• Revisar objetivos por posição no Cadastro Central.\n• Confirmar dia limite de lançamento no mês.\n• Definir faixas do semáforo com a Controladoria.\n\nEncaminhamentos\n• Comissão lança as intervenções até o dia limite.\n• Pendências voltam ao gestor da área toda semana."},{t:"Kickoff do PDI",b:"Validar fichas, KPIs por posição e regras de fechamento com a Controladoria e as comissões."}]},{s:"Planos de Treino",p:[{t:"Microciclo — semana 2",b:"Foco: temporização (zagueiros e laterais) e apoio entre linhas (meias).\nFrequência prevista: 3x na semana."}]},{s:"Observações de Jogo",p:[{t:"Jogo 2 — nível A",b:"Destaques ofensivos e leitura de desmarques. Vincular ao KPI de Jogo do atleta."}]}];
+let NS=0,NP=0;
+PAGES.notas=function(){
+  const sec=NOTES[NS],pg=sec.p[NP]||sec.p[0];
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>📓 Bloco de Anotações</h2><div class="sub">Notebook da equipe (OneNote) — seções, páginas e texto livre. Neste protótipo as edições ficam apenas na sessão.</div></div><div class="wp-actions"><button class="btn-secondary" onclick="addSec()">+ Seção</button><button class="btn-primary" onclick="addPage()">+ Página</button></div></div>
+  <div class="notes"><div>${NOTES.map((s,i)=>`<div class="nsec ${i===NS?"on":""}" onclick="NS=${i};NP=0;PAGES.notas()">${esc(s.s)}</div>`).join("")}</div>
+  <div>${sec.p.map((p,i)=>`<div class="npage ${i===NP?"on":""}" onclick="NP=${i};PAGES.notas()">${esc(p.t)}</div>`).join("")}</div>
+  <div><input class="ntitle" value="${esc(pg.t)}" oninput="NOTES[NS].p[NP].t=this.value;$('#nsaved').textContent='Salvo na sessão ✓'"><textarea oninput="NOTES[NS].p[NP].b=this.value;$('#nsaved').textContent='Salvo na sessão ✓'">${esc(pg.b)}</textarea><div class="note" id="nsaved">&nbsp;</div></div></div></div>`;
+};
+function addSec(){NOTES.push({s:"Nova seção",p:[{t:"Nova página",b:""}]});NS=NOTES.length-1;NP=0;PAGES.notas()}
+function addPage(){NOTES[NS].p.push({t:"Nova página",b:""});NP=NOTES[NS].p.length-1;PAGES.notas()}
+
+/* ================= ÁREAS RESTRITAS (Matriz de visibilidade) ================= */
+function restricted(nome,nivel,detalhe){
+  return function(){
+    if(nivel==="ind"){$("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>${nome} <span class="badge-count" style="background:#B26A00">somente indicador</span></h2><div class="sub">A Comissão Técnica enxerga apenas o indicador agregado desta área.</div></div></div><div class="wp-body"><div class="kcard warn" style="max-width:340px"><div class="lbl">Atletas com lançamentos em dia</div><div class="val">3/4</div><div class="sub">75% em dia · 1 pendente no ciclo</div></div><div class="progress" style="margin:14px 0;max-width:340px"><div style="width:75%"></div></div><div class="infobox">${detalhe}</div></div></div>`;return}
+    $("#content").innerHTML=`<div class="webpart"><div class="wp-body" style="text-align:center;padding:48px 24px"><div style="font-size:42px">🔒</div><h2 style="margin:8px 0">${nome} — acesso restrito</h2><p style="max-width:560px;margin:0 auto 16px;color:var(--sp-sub)">${detalhe}</p><button class="btn-secondary" onclick="toast('Solicitação de acesso enviada à Controladoria (simulado).')">Solicitar acesso</button></div></div>`};
+}
+PAGES.fisico=restricted("Físico","ind","Pela Matriz de Visibilidade, a Comissão Técnica vê somente o indicador do Físico. Testes, resultados e plano de ação ficam com o Departamento Médico/Performance.");
+PAGES.nutricao=restricted("Nutrição","no","Dado sensível (LGPD): somente a Nutrição acessa o conteúdo; a Controladoria enxerga apenas o indicador agregado. A Comissão Técnica não visualiza esta área.");
+PAGES.social=restricted("Serviço Social","no","Dado sensível (LGPD): ocorrências e situação familiar são visíveis apenas ao Serviço Social. A Comissão Técnica não visualiza esta área. Aplica-se somente à ficha base.");
+PAGES.psico=restricted("Psicologia","no","Dado muito sensível (LGPD): objetivos, plano e ocorrências clínicas são visíveis apenas à Psicologia. A Comissão Técnica não visualiza esta área.");
+
+/* ================= LIXEIRA & CONFIGURAÇÕES ================= */
+PAGES.lixeira=function(){
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>🗑️ Lixeira <span class="badge-count">${TRASH.length}</span></h2><div class="sub">Itens excluídos ficam recuperáveis e a exclusão entra na trilha de alterações. Só é possível excluir itens de competência aberta.</div></div></div>
+  ${TRASH.length?`<table class="splist"><thead><tr><th>ID</th><th>Atleta</th><th>Tipo</th><th>Descrição</th><th>Responsável</th><th></th></tr></thead><tbody>${TRASH.map((r,i)=>`<tr style="cursor:default"><td>${r.id}</td><td>${atl(r.atleta).nome}</td><td>${r._del==="J"?"KPI de Jogo":r.tipo}</td><td class="wrap">${esc(r._del==="J"?r.kpi:cellOf(r))}</td><td>${esc(r.resp)}</td><td><button class="btn-secondary" onclick="restoreItem(${i})">Restaurar</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty">A lixeira está vazia. Exclua um item criado na competência aberta para ver aqui.</div>`}</div>`;
+};
+function restoreItem(i){const[r]=TRASH.splice(i,1);const k=r._del;delete r._del;(k==="J"?JOGOS:ROWS).push(r);LOG.push({quando:nowStamp(),usuario:USUARIO,item:r.id,campo:"(item)",de:"Lixeira",para:"Restaurado"});toast(r.id+" restaurado.");renderNav();PAGES.lixeira()}
+PAGES.config=function(){
+  const comps=COMPETENCIAS;
+  $("#content").innerHTML=`<div class="webpart"><div class="webpart-head"><div><h2>⚙️ Configurações do site</h2><div class="sub">Permissões e fechamento mensal (visão demonstrativa da Controladoria)</div></div></div></div>
+  <div class="grid2e"><div class="card"><h3>Permissões por grupo</h3><div class="sub">Governança de acesso por sensibilidade do dado</div><table class="t2"><thead><tr><th>Grupo</th><th>Tático Técnico</th><th>Físico</th><th>Nutrição / Social / Psicologia</th></tr></thead><tbody>
+  <tr><td>Comissão Técnica</td><td><span class="badge b-verde">Total</span></td><td><span class="badge b-amarelo">Indicador</span></td><td><span class="badge b-vermelho">Sem acesso</span></td></tr>
+  <tr><td>Controladoria</td><td><span class="badge b-verde">Total</span></td><td><span class="badge b-amarelo">Indicador</span></td><td><span class="badge b-amarelo">Indicador agregado</span></td></tr>
+  <tr><td>Dep. Médico / Performance</td><td><span class="badge b-amarelo">Indicador</span></td><td><span class="badge b-verde">Total</span></td><td><span class="badge b-vermelho">Sem acesso</span></td></tr></tbody></table><div class="note">Conforme a Matriz de Visibilidade do BI da Controladoria.</div></div>
+  <div class="card"><h3>Fechamento mensal por competência</h3><div class="sub">Controladoria abre/fecha — itens só são aceitos em competência aberta</div><table class="t2"><thead><tr><th>Competência</th><th>Status</th><th></th></tr></thead><tbody>${comps.map(c=>{const s=compStatus(c),open=OPEN_COMPS.has(c);return `<tr><td>${c}</td><td><span class="badge ${open?"b-verde":s==="futura"?"b-cinza":"b-vermelho"}">${open?"Aberta":s==="futura"?"Não iniciada":"Fechada"}</span></td><td><button class="btn-secondary" onclick="toggleComp('${c}')">${open?"Fechar":"Abrir"}</button></td></tr>`}).join("")}</tbody></table></div></div>`;
+};
+function toggleComp(c){const open=OPEN_COMPS.has(c);if(open)OPEN_COMPS.delete(c);else OPEN_COMPS.add(c);LOG.push({quando:nowStamp(),usuario:"Controladoria (simulado)",item:"COMP-"+c,campo:"Competência",de:open?"Aberta":"Fechada",para:open?"Fechada":"Aberta"});toast(`Competência ${c} ${open?"fechada":"aberta"}.`);PAGES.config()}
+
+/* ================= INIT ================= */
+(function init(){const h=location.hash.replace("#","");PAGE=PAGES[h]?h:"home";renderNav();renderPage()})();
+</script></body></html>
